@@ -22,7 +22,7 @@ Add the plugin in your `gatsby-config.js` file:
 
 ```js
 const STRAVA_TOKEN = "your-token"
-const TIMESTAMP = (module.exports = {
+module.exports = {
     plugins: [
         {
             resolve: "gatsby-source-strava",
@@ -96,7 +96,7 @@ const TIMESTAMP = (module.exports = {
             },
         },
     ],
-})
+}
 ```
 
 ## Contributing
