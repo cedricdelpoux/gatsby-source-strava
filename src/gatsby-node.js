@@ -17,8 +17,6 @@ exports.sourceNodes = (
       let heartrateMax
       const activities = await getActivities({
         token,
-        before,
-        after,
         options: activitiesOptions,
       })
 

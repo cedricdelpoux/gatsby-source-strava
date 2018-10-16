@@ -3,8 +3,8 @@ const {get} = require("./get.js")
 const getActivities = ({
   token,
   options: {
-    after,
-    before,
+    after = null,
+    before = null,
     streamsTypes = [],
     withComments = false,
     withKudos = false,
