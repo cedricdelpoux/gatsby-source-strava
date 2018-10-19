@@ -1,17 +1,12 @@
 {
   "name": "gatsby-source-strava",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Gatsby plugin to use Strava as a data source",
   "repository": "https://github.com/xuopled/gatsby-source-strava",
   "author": "Cédric Delpoux",
   "license": "MIT",
   "private": false,
-  "keywords": [
-    "gatsby",
-    "gatsby-plugin",
-    "gatsby-source",
-    "strava"
-  ],
+  "keywords": ["gatsby", "gatsby-plugin", "gatsby-source", "strava"],
   "main": "index.js",
   "dependencies": {
     "bluebird": "^3.5.1",
