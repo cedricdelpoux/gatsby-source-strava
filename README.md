@@ -57,6 +57,9 @@ module.exports = {
                     withRelated: true,
                     // Add streams to every activity (see streamTypes)
                     withStreams: true,
+                    // Add zones to every activity (need Strava Summit Analysis Pack)
+                    withZones: true,
+                    //
                     // Add analyzed data to every activity
                     // withStreams option must be true
                     // See https://developers.strava.com/docs/reference/#api-models-StreamSet

@@ -12,6 +12,7 @@ const getActivities = ({
     withPhotos = false,
     withRelated = false,
     withStreams = false,
+    withZones = false,
   },
 }) =>
   new Promise(async (resolve, reject) => {
@@ -73,14 +74,22 @@ const getActivities = ({
                 })
               : null
 
+            const zones = withZones
+              ? await getActivityZones({
+                  activityId: activity.id,
+                  token,
+                })
+              : null
+
             const activityFull = {
               ...activity,
-              ...(comments ? {comments} : {}),
-              ...(kudos ? {kudos} : {}),
-              ...(laps ? {laps} : {}),
-              ...(photos ? {photos} : {}),
-              ...(related ? {related} : {}),
-              ...(streams ? {streams} : {}),
+              ...(comments && {comments}),
+              ...(kudos && {kudos}),
+              ...(laps && {laps}),
+              ...(photos && {photos}),
+              ...(related && {related}),
+              ...(streams && {streams}),
+              ...(zones && {zones}),
             }
 
             resolve(activityFull)
@@ -170,6 +179,12 @@ const getActivityRelated = ({token: access_token, activityId: id}) =>
     method: {category: "activities", name: "listRelated"},
   })
 
+const getActivityZones = ({token: access_token, activityId: id}) =>
+  get({
+    args: {id, access_token},
+    method: {category: "activities", name: "listZones"},
+  })
+
 module.exports = {
   getActivities,
   getActivityComments,
@@ -178,4 +193,5 @@ module.exports = {
   getActivityPhotos,
   getActivityRelated,
   getActivityStreams,
+  getActivityZones,
 }
