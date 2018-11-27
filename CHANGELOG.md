@@ -10,3 +10,7 @@
 # 1.1.0 (2018-10-19)
 
 -   Added: `withZones` option to add zones to every activity (need Strava Summit Analysis Pack)
+
+# 1.2.0 (2018-11-27)
+
+-   Added: `cacheDir` to activitiesOptions

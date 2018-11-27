@@ -1,4 +1,4 @@
-const {get} = require("./get.js")
+const get = require("./get.js")
 
 const getAthlete = ({
   token,
@@ -76,10 +76,4 @@ const getAthleteKoms = ({token: access_token, athleteId: id}) =>
     method: {category: "athletes", name: "listKoms"},
   })
 
-module.exports = {
-  getAthlete,
-  getAthleteKoms,
-  getAthleteRoutes,
-  getAthleteStats,
-  getAthleteZones,
-}
+module.exports = getAthlete

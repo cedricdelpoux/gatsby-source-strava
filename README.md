@@ -76,6 +76,10 @@ module.exports = {
                         "velocity_smooth",
                         "altitude",
                     ],
+                    //
+                    // Option to cache activities
+                    // ------
+                    cacheDir: `${__dirname}/.strava`,
                 },
                 athleteOptions: {
                     // Options computed by gatsby-source-strava
