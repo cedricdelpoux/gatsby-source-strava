@@ -10,14 +10,27 @@ const {
 
 const getActivities = async ({token, options}) => {
   const {cacheDir, ...activitiesOptions} = options
-  let activitiesPageCount
+  let hasNextPage
   let page = 1
+  let retry = false
   const nowTimestamp = new Date().getTime()
 
   const activities = cacheDir ? await readActivitiesFromCache(cacheDir) : []
   const lastTimestamp = cacheDir ? await readLastFetchFromCache(cacheDir) : null
 
+  if (lastTimestamp) {
+    // eslint-disable-next-line
+    console.info(
+      "source-strava: ",
+      "Fetching activities since ",
+      new Date(lastTimestamp)
+    )
+  }
+
   do {
+    retry = false
+    hasNextPage = false
+
     try {
       const activitiesPageFull = await getActivitiesPageFull({
         token,
@@ -36,20 +49,22 @@ const getActivities = async ({token, options}) => {
         }
       })
 
-      activitiesPageCount = activitiesPageFull.length
+      hasNextPage = activitiesPageFull.length > 0
       page++
     } catch (e) {
-      activitiesPageCount = null
-
       if (e.code === "SHORT_LIMIT") {
+        retry = true
+
         // eslint-disable-next-line
-        console.info("\n", "source-strava: ", e.massage, new Date(), "\n")
+        console.info("source-strava: ", e.message, new Date())
         await sleep(900000) // Wait 15min
       } else {
+        // eslint-disable-next-line
+        console.error(e, new Date())
         throw e
       }
     }
-  } while (activitiesPageCount === null || activitiesPageCount > 0)
+  } while (hasNextPage || retry)
 
   if (cacheDir) {
     await writeLastFetchToCache(cacheDir, nowTimestamp)

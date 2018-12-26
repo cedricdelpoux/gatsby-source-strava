@@ -1,6 +1,6 @@
 const get = require("./get.js")
 
-const getAthlete = ({
+const getAthlete = async ({
   token,
   options: {
     withKoms = false,
@@ -8,8 +8,8 @@ const getAthlete = ({
     withStats = false,
     withZones = false,
   },
-}) =>
-  new Promise(async resolve => {
+}) => {
+  try {
     const athlete = await get({
       args: {access_token: token},
       method: {category: "athlete", name: "get"},
@@ -49,8 +49,11 @@ const getAthlete = ({
       ...(zones ? {zones} : {}),
     }
 
-    resolve(athleteWithOptions)
-  })
+    return athleteWithOptions
+  } catch (e) {
+    throw e
+  }
+}
 
 const getAthleteZones = ({token: access_token}) =>
   get({

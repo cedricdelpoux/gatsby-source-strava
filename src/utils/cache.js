@@ -42,27 +42,21 @@ const readLastFetchFromCache = dir =>
     }
   })
 
-const writeActivityToCache = (dir, activity) =>
-  new Promise(resolve => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir)
-    }
+const writeActivityToCache = (dir, activity) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+  }
 
-    fs.writeFileSync(`${dir}/${activity.id}.json`, JSON.stringify(activity))
+  fs.writeFileSync(`${dir}/${activity.id}.json`, JSON.stringify(activity))
+}
 
-    resolve()
-  })
+const writeLastFetchToCache = (dir, lastFetch) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir)
+  }
 
-const writeLastFetchToCache = (dir, lastFetch) =>
-  new Promise(resolve => {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir)
-    }
-
-    fs.writeFileSync(`${dir}/${LAST_FETCH_FILENAME}`, lastFetch)
-
-    resolve()
-  })
+  fs.writeFileSync(`${dir}/${LAST_FETCH_FILENAME}`, lastFetch)
+}
 
 module.exports = {
   readActivitiesFromCache,
