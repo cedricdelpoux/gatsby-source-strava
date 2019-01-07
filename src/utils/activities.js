@@ -13,10 +13,12 @@ const getActivities = async ({token, options}) => {
   let hasNextPage
   let page = 1
   let retry = false
-  const nowTimestamp = new Date().getTime()
+  const nowTimestamp = Date.now()
 
   const activities = cacheDir ? await readActivitiesFromCache(cacheDir) : []
-  const lastTimestamp = cacheDir ? await readLastFetchFromCache(cacheDir) : null
+  const lastTimestamp = cacheDir
+    ? Number.parseInt(await readLastFetchFromCache(cacheDir))
+    : null
 
   if (lastTimestamp) {
     // eslint-disable-next-line
