@@ -7,7 +7,7 @@ const {
   writeLastFetchToCache,
   writeActivityToCache,
 } = require("./cache.js")
-const to10DigitTimestamp = require("./timsestamp.js")
+const to10DigitTimestamp = require("./timestamp.js")
 
 const getActivities = async ({debug, options, token}) => {
   const {cacheDir, ...activitiesOptions} = options
