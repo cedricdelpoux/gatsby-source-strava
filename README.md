@@ -27,12 +27,17 @@ module.exports = {
         {
             resolve: "gatsby-source-strava",
             options: {
+                //
+                // Mandatory
+                // --------
+                //
                 token: STRAVA_TOKEN,
+
                 //
                 // Optional
                 // --------
                 //
-
+                debug: true,
                 activitiesOptions: {
                     // Options for filtering activities
                     // --------------------------------

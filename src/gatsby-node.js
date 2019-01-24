@@ -5,7 +5,7 @@ const getAthlete = require("./utils/athlete.js")
 
 exports.sourceNodes = async (
   {actions: {createNode}},
-  {token, activitiesOptions, athleteOptions}
+  {activitiesOptions, athleteOptions, debug, token}
 ) => {
   if (!token) {
     throw new Error("source-strava: Missing API token")
@@ -14,10 +14,11 @@ exports.sourceNodes = async (
   try {
     let heartrateMax
     const activities = await getActivities({
-      token,
+      debug,
       options: {
         ...activitiesOptions,
       },
+      token,
     })
 
     if (activities && activities.length > 0) {

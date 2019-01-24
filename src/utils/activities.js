@@ -9,7 +9,7 @@ const {
 } = require("./cache.js")
 const to10DigitTimestamp = require("./timsestamp.js")
 
-const getActivities = async ({token, options}) => {
+const getActivities = async ({debug, options, token}) => {
   const {cacheDir, ...activitiesOptions} = options
   let hasNextPage
   let page = 1
@@ -20,7 +20,7 @@ const getActivities = async ({token, options}) => {
   const lastTimestamp = cacheDir ? await readLastFetchFromCache(cacheDir) : null
   const after = to10DigitTimestamp(options.after || lastTimestamp)
 
-  if (after) {
+  if (debug && after) {
     // eslint-disable-next-line
     console.info(
       "source-strava: ",
@@ -57,8 +57,11 @@ const getActivities = async ({token, options}) => {
       if (e.code === "SHORT_LIMIT") {
         retry = true
 
-        // eslint-disable-next-line
-        console.info("source-strava: ", e.message, new Date())
+        if (debug) {
+          // eslint-disable-next-line
+          console.info("source-strava: ", e.message, new Date())
+        }
+
         await sleep(900000) // Wait 15min
       } else {
         // eslint-disable-next-line
@@ -70,6 +73,15 @@ const getActivities = async ({token, options}) => {
 
   if (cacheDir) {
     await writeLastFetchToCache(cacheDir, nowTimestamp)
+  }
+
+  if (debug) {
+    // eslint-disable-next-line
+    console.info(
+      "source-strava: ",
+      activities.length + "new activities",
+      new Date()
+    )
   }
 
   return activities
