@@ -22,3 +22,8 @@
 # 1.2.2 (2019-01-07)
 
 -   Fixed: Cast timestamp to Int
+
+# 1.3.0 (2019-01-24)
+
+-   Updated: Handle 10 and 13 digit timestamps
+-   Added: Debug option
