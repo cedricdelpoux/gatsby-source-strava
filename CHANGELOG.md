@@ -27,3 +27,7 @@
 
 -   Updated: Handle 10 and 13 digit timestamps
 -   Added: Debug option
+
+# 1.3.2 (2019-02-22)
+
+-   Updated: Better debug logs

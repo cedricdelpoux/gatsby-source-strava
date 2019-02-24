@@ -7,7 +7,6 @@ const {
   writeLastFetchToCache,
   writeActivityToCache,
 } = require("./cache.js")
-const to10DigitTimestamp = require("./timestamp.js")
 
 const getActivities = async ({debug, options, token}) => {
   const {cacheDir, ...activitiesOptions} = options
@@ -16,16 +15,19 @@ const getActivities = async ({debug, options, token}) => {
   let retry = false
   const nowTimestamp = Date.now()
 
-  const activities = cacheDir ? await readActivitiesFromCache(cacheDir) : []
+  const newActivities = []
+  const cachedActivities = cacheDir
+    ? await readActivitiesFromCache(cacheDir)
+    : []
   const lastTimestamp = cacheDir ? await readLastFetchFromCache(cacheDir) : null
-  const after = to10DigitTimestamp(options.after || lastTimestamp)
+  const after = options.after || lastTimestamp
 
   if (debug && after) {
     // eslint-disable-next-line
     console.info(
       "source-strava: ",
       "Fetching activities since ",
-      new Date(lastTimestamp * 1000)
+      new Date(after * 1000)
     )
   }
 
@@ -44,7 +46,7 @@ const getActivities = async ({debug, options, token}) => {
       })
 
       activitiesPageFull.forEach(async activityFull => {
-        activities.push(activityFull)
+        newActivities.push(activityFull)
 
         if (cacheDir) {
           await writeActivityToCache(cacheDir, activityFull)
@@ -79,12 +81,12 @@ const getActivities = async ({debug, options, token}) => {
     // eslint-disable-next-line
     console.info(
       "source-strava: ",
-      activities.length + "new activities",
+      newActivities.length + " new activities",
       new Date()
     )
   }
 
-  return activities
+  return [...cachedActivities, ...newActivities]
 }
 
 const getActivitiesPageFull = async ({

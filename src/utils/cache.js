@@ -1,5 +1,7 @@
 const fs = require("fs")
 
+const to10DigitTimestamp = require("./timestamp.js")
+
 const LAST_FETCH_FILENAME = ".last-fetch.txt"
 
 const readActivitiesFromCache = dir =>
@@ -36,7 +38,7 @@ const readLastFetchFromCache = dir =>
         `${dir}/${LAST_FETCH_FILENAME}`,
         "utf-8"
       )
-      resolve(lastFetched)
+      resolve(to10DigitTimestamp(lastFetched))
     } else {
       resolve(null)
     }
@@ -55,7 +57,10 @@ const writeLastFetchToCache = (dir, lastFetch) => {
     fs.mkdirSync(dir)
   }
 
-  fs.writeFileSync(`${dir}/${LAST_FETCH_FILENAME}`, lastFetch)
+  fs.writeFileSync(
+    `${dir}/${LAST_FETCH_FILENAME}`,
+    to10DigitTimestamp(lastFetch)
+  )
 }
 
 module.exports = {
