@@ -67,6 +67,10 @@ exports.sourceNodes = async (
       },
     })
   } catch (e) {
+    if (debug) {
+      // eslint-disable-next-line
+      console.error(e)
+    }
     throw new Error(`source-strava: ${e.message}`)
   }
 }

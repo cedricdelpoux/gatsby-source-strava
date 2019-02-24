@@ -5,13 +5,6 @@ const SourceStravaError = require("./error")
 const get = ({args, method: {category, name}, format}) =>
   new Promise((resolve, reject) => {
     strava[category][name](args, (err, payload, limits) => {
-      const {
-        shortTermUsage,
-        shortTermLimit,
-        longTermUsage,
-        longTermLimit,
-      } = limits
-
       if (err) {
         return reject(
           new SourceStravaError(
@@ -21,8 +14,26 @@ const get = ({args, method: {category, name}, format}) =>
             `API error: ${err.msg} during strava.${category}.${name}`
           )
         )
-      } else if (shortTermUsage >= shortTermLimit) {
-        reject(
+      } else if (payload.errors && payload.errors.length > 0) {
+        return reject(
+          new SourceStravaError(
+            "error",
+            category,
+            name,
+            `API error: ${payload.message} during strava.${category}.${name}`
+          )
+        )
+      }
+
+      const {
+        shortTermUsage,
+        shortTermLimit,
+        longTermUsage,
+        longTermLimit,
+      } = limits
+
+      if (shortTermUsage >= shortTermLimit) {
+        return reject(
           new SourceStravaError(
             "SHORT_LIMIT",
             category,
@@ -31,7 +42,7 @@ const get = ({args, method: {category, name}, format}) =>
           )
         )
       } else if (longTermUsage >= longTermLimit) {
-        reject(
+        return reject(
           new SourceStravaError(
             "LONG_LIMIT",
             category,

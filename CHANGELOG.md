@@ -31,3 +31,7 @@
 # 1.3.2 (2019-02-22)
 
 -   Updated: Better debug logs
+
+# 1.3.3 (2019-02-24)
+
+-   Updated: Error handling

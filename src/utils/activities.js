@@ -66,8 +66,6 @@ const getActivities = async ({debug, options, token}) => {
 
         await sleep(900000) // Wait 15min
       } else {
-        // eslint-disable-next-line
-        console.error(e, new Date())
         throw e
       }
     }
