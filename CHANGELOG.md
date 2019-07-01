@@ -39,3 +39,7 @@
 # 1.3.4 (2019-06-14)
 
 -   Removed: Gatsby dependency
+
+# 1.4.0 (2019-07-01)
+
+-   Updated: Errors handling
