@@ -5,10 +5,12 @@ const SourceStravaError = require("./error")
 const get = ({args, method: {category, name}, format}) =>
   new Promise((resolve, reject) => {
     strava[category][name](args, (err, payload, limits) => {
-      if (limits) {
-        const {shortTermUsage, shortTermLimit} = limits
-
-        if (shortTermUsage >= shortTermLimit) {
+      if (
+        limits &&
+        (limits.shortTermUsage >= limits.shortTermLimit ||
+          limits.longTermUsage > limits.longTermLimit)
+      ) {
+        if (limits.shortTermUsage >= limits.shortTermLimit) {
           return reject(
             new SourceStravaError(
               "SHORT_LIMIT",
