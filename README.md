@@ -13,103 +13,38 @@ You can download `gatsby-source-strava` from the NPM registry via the
 
 ```shell
 yarn add gatsby-source-strava
+# OR
 npm install gatsby-source-strava --save
 ```
+
+### Generate a token to access Strava API:
+
+`gatsby-source-strava` provides a command-line script to generate a Strava token.
+
+```shell
+gatsby-source-strava-token
+```
+
+> You must be in the root folder of your project to run the script because it will write the token to your file system.
+
+You should add the cache folder `.strava/` to your `.gitignore` because it contains some sensitive informartions.  
+For more information, see [cache](./docs/cache.md) documentation.
+
+To use your token on CDN, see [token](./docs/token.md) documentation.
 
 ## Usage
 
 Add the plugin in your `gatsby-config.js` file:
 
 ```js
-const STRAVA_TOKEN = "your-token"
 module.exports = {
-    plugins: [
-        {
-            resolve: "gatsby-source-strava",
-            options: {
-                //
-                // Mandatory
-                // --------
-                //
-                token: STRAVA_TOKEN,
-
-                //
-                // Optional
-                // --------
-                //
-                debug: true,
-                activitiesOptions: {
-                    // Options for filtering activities
-                    // --------------------------------
-                    //
-                    // Timestamp for filtering activities that have taken place BEFORE a certain time
-                    before: "1539500400",
-                    // Timestamp for filtering activities that have taken place AFTER a certain time
-                    after: "1539500400",
-                    //
-                    // Options for enhance activities
-                    // --------------------------------
-                    //
-                    // Add comments to every activity
-                    withComments: true,
-                    // Add kudos to every activity
-                    withKudos: true,
-                    // Add laps to every activity
-                    withLaps: true,
-                    // Add photos to every activity
-                    withPhotos: true,
-                    // Add related activities to every activity
-                    withRelated: true,
-                    // Add streams to every activity (see streamTypes)
-                    withStreams: true,
-                    // Add zones to every activity (need Strava Summit Analysis Pack)
-                    withZones: true,
-                    //
-                    // Add analyzed data to every activity
-                    // withStreams option must be true
-                    // See https://developers.strava.com/docs/reference/#api-models-StreamSet
-                    streamsTypes: [
-                        "time",
-                        "cadence",
-                        "distance",
-                        "latlng",
-                        "heartrate",
-                        "temp",
-                        "moving",
-                        "grade_smooth",
-                        "watts",
-                        "velocity_smooth",
-                        "altitude",
-                    ],
-                    //
-                    // Option to cache activities
-                    // ------
-                    cacheDir: `${__dirname}/.strava`,
-                },
-                athleteOptions: {
-                    // Options computed by gatsby-source-strava
-                    // ----------------------------------------
-                    //
-                    // Add `heartrateMax` data to `athlete`
-                    computeHeartrateMax: true,
-                    //
-                    // Options for enhance athlete data
-                    // --------------------------------
-                    //
-                    // Add athlete koms
-                    withKoms: true,
-                    // Add athlete routes
-                    withRoutes: true,
-                    // Add athlete stats
-                    withStats: true,
-                    // Add athlete zones
-                    withZones: true,
-                },
-            },
-        },
-    ],
+    plugins: ["gatsby-source-strava"],
 }
 ```
+
+That's it!
+
+> For advanced configuration, please read [options](./docs/options.md) documentation.
 
 ## Contributing
 

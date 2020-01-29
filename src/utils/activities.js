@@ -1,33 +1,25 @@
 const sleep = require("system-sleep")
 
-const get = require("./get.js")
-const {
-  readActivitiesFromCache,
-  readLastFetchFromCache,
-  writeLastFetchToCache,
-  writeActivityToCache,
-} = require("./cache.js")
+const {get} = require("./strava.js")
+const {cache} = require("./cache.js")
 
-const getActivities = async ({debug, options, token}) => {
-  const {cacheDir, ...activitiesOptions} = options
+const getActivities = async ({debug, options, reporter}) => {
   let hasNextPage
   let page = 1
   let retry = false
-  const nowTimestamp = Date.now()
-
+  let after = options.after
   const newActivities = []
-  const cachedActivities = cacheDir
-    ? await readActivitiesFromCache(cacheDir)
-    : []
-  const lastTimestamp = cacheDir ? await readLastFetchFromCache(cacheDir) : null
-  const after = options.after || lastTimestamp
+  const cachedActivities = await cache.getActivities()
+  const lastTimestamp = await cache.getLastFetch()
+
+  if (!after && lastTimestamp) {
+    after = lastTimestamp
+  }
 
   if (debug && after) {
-    // eslint-disable-next-line
-    console.info(
-      "source-strava: ",
-      "Fetching activities since ",
-      new Date(after * 1000)
+    reporter.info(
+      "source-strava: Fetching activities since " +
+        new Date(after * 1000).toLocaleString()
     )
   }
 
@@ -37,50 +29,57 @@ const getActivities = async ({debug, options, token}) => {
 
     try {
       const activitiesPageFull = await getActivitiesPageFull({
-        token,
         options: {
-          ...activitiesOptions,
+          ...options,
           after,
         },
         page,
       })
 
-      activitiesPageFull.forEach(async activityFull => {
-        newActivities.push(activityFull)
+      if (activitiesPageFull.length > 0) {
+        const activitiesTimestamp = activitiesPageFull.map(activity =>
+          new Date(activity.start_date).getTime()
+        )
+        const lastActivityTimestamp = Math.max(...activitiesTimestamp)
 
-        if (cacheDir) {
-          await writeActivityToCache(cacheDir, activityFull)
-        }
-      })
+        activitiesPageFull.forEach(async activityFull => {
+          newActivities.push(activityFull)
 
-      hasNextPage = activitiesPageFull.length > 0
-      page++
+          await cache.setActivity(activityFull)
+          await cache.setLastFetch(lastActivityTimestamp)
+        })
+
+        hasNextPage = activitiesPageFull.length > 0
+        page++
+      } else {
+        await cache.setLastFetch(Date.now())
+      }
     } catch (e) {
       if (e.code === "SHORT_LIMIT") {
         retry = true
 
-        if (debug) {
-          // eslint-disable-next-line
-          console.info("source-strava: ", e.message, new Date())
-        }
+        reporter.warn("source-strava: " + e.message)
 
-        await sleep(900000) // Wait 15min
+        const waintingTime = 900 // 15 minutes
+        const newTryDate = new Date()
+        newTryDate.setSeconds(newTryDate.getSeconds() + waintingTime)
+
+        reporter.info(
+          "source-strava: New try at " + newTryDate.toLocaleString()
+        )
+
+        await sleep(waintingTime * 1000)
       } else {
         throw e
       }
     }
   } while (hasNextPage || retry)
 
-  if (cacheDir) {
-    await writeLastFetchToCache(cacheDir, nowTimestamp)
-  }
-
   if (debug) {
-    // eslint-disable-next-line
-    console.info(
-      "source-strava: ",
-      newActivities.length + " new activities",
-      new Date()
+    reporter.info(
+      `source-strava: ${
+        newActivities.length
+      } new activities ${new Date().toLocaleString()}`
     )
   }
 
@@ -88,7 +87,6 @@ const getActivities = async ({debug, options, token}) => {
 }
 
 const getActivitiesPageFull = async ({
-  token,
   options: {
     after = null,
     before = null,
@@ -103,145 +101,127 @@ const getActivitiesPageFull = async ({
   },
   page,
 }) => {
-  try {
-    const activitiesPage = await getActivitiesPage({
-      after,
-      before,
-      token,
-      page,
-    })
+  const activitiesPage = await getActivitiesPage({
+    after,
+    before,
+    page,
+  })
 
-    if (activitiesPage && activitiesPage.length > 0) {
-      const requests = await activitiesPage.map(
-        async activity =>
-          new Promise(async (resolve, reject) => {
-            try {
-              const comments = withComments
-                ? await getActivityComments({
-                    activityId: activity.id,
-                    token,
-                  })
-                : null
+  if (activitiesPage && activitiesPage.length > 0) {
+    const requests = await activitiesPage.map(
+      async activity =>
+        new Promise(async (resolve, reject) => {
+          try {
+            const comments = withComments
+              ? await getActivityComments({
+                  activityId: activity.id,
+                })
+              : null
 
-              const kudos = withKudos
-                ? await getActivityKudos({
-                    activityId: activity.id,
-                    token,
-                  })
-                : null
+            const kudos = withKudos
+              ? await getActivityKudos({
+                  activityId: activity.id,
+                })
+              : null
 
-              const laps = withLaps
-                ? await getActivityLaps({
-                    activityId: activity.id,
-                    token,
-                  })
-                : null
+            const laps = withLaps
+              ? await getActivityLaps({
+                  activityId: activity.id,
+                })
+              : null
 
-              const photos = withPhotos
-                ? await getActivityPhotos({
-                    activityId: activity.id,
-                    token,
-                  })
-                : null
+            const photos = withPhotos
+              ? await getActivityPhotos({
+                  activityId: activity.id,
+                })
+              : null
 
-              const related = withRelated
-                ? await getActivityRelated({
-                    activityId: activity.id,
-                    token,
-                  })
-                : null
+            const related = withRelated
+              ? await getActivityRelated({
+                  activityId: activity.id,
+                })
+              : null
 
-              const streams = withStreams
-                ? await getActivityStreams({
-                    activityId: activity.id,
-                    token,
-                    streamsTypes,
-                  })
-                : null
+            const streams = withStreams
+              ? await getActivityStreams({
+                  activityId: activity.id,
+                  streamsTypes,
+                })
+              : null
 
-              const zones = withZones
-                ? await getActivityZones({
-                    activityId: activity.id,
-                    token,
-                  })
-                : null
+            const zones = withZones
+              ? await getActivityZones({
+                  activityId: activity.id,
+                })
+              : null
 
-              const activityFull = {
-                ...activity,
-                ...(comments && {comments}),
-                ...(kudos && {kudos}),
-                ...(laps && {laps}),
-                ...(photos && {photos}),
-                ...(related && {related}),
-                ...(streams && {streams}),
-                ...(zones && {zones}),
-              }
-
-              resolve(activityFull)
-            } catch (e) {
-              reject(e)
+            const activityFull = {
+              ...activity,
+              ...(comments && {comments}),
+              ...(kudos && {kudos}),
+              ...(laps && {laps}),
+              ...(photos && {photos}),
+              ...(related && {related}),
+              ...(streams && {streams}),
+              ...(zones && {zones}),
             }
-          })
-      )
 
-      return await Promise.all(requests)
-    } else return []
-  } catch (e) {
-    throw e
-  }
+            resolve(activityFull)
+          } catch (e) {
+            reject(e)
+          }
+        })
+    )
+
+    return await Promise.all(requests)
+  } else return []
 }
 
-const getActivitiesPage = async ({token: access_token, before, after, page}) =>
+const getActivitiesPage = async ({before, after, page}) =>
   get({
     args: {
-      access_token,
-      after,
-      before,
+      ...(after ? {after} : {}),
+      ...(before ? {before} : {}),
       page,
       per_page: 30,
     },
     method: {category: "athlete", name: "listActivities"},
   })
 
-const getActivityLaps = async ({token: access_token, activityId: id}) =>
+const getActivityLaps = async ({activityId: id}) =>
   get({
-    args: {id, access_token},
+    args: {id},
     method: {category: "activities", name: "listLaps"},
   })
 
-const getActivityComments = async ({token: access_token, activityId: id}) =>
+const getActivityComments = async ({activityId: id}) =>
   get({
-    args: {id, access_token},
+    args: {id},
     method: {category: "activities", name: "listComments"},
   })
 
-const getActivityKudos = async ({token: access_token, activityId: id}) =>
+const getActivityKudos = async ({activityId: id}) =>
   get({
-    args: {id, access_token},
+    args: {id},
     method: {category: "activities", name: "listKudos"},
   })
 
-const getActivityPhotos = async ({token: access_token, activityId: id}) =>
+const getActivityPhotos = async ({activityId: id}) =>
   get({
-    args: {id, access_token},
+    args: {id},
     method: {category: "activities", name: "listPhotos"},
   })
 
-const getActivityRelated = async ({token: access_token, activityId: id}) =>
+const getActivityRelated = async ({activityId: id}) =>
   get({
-    args: {id, access_token},
+    args: {id},
     method: {category: "activities", name: "listRelated"},
   })
 
-const getActivityStreams = ({
-  token: access_token,
-  activityId: id,
-  streamsTypes: types,
-}) =>
+const getActivityStreams = ({activityId: id, streamsTypes: types}) =>
   get({
     args: {
       id,
-      access_token,
       types,
       series_type: "time",
       resolution: "high",
@@ -261,9 +241,9 @@ const getActivityStreams = ({
     },
   })
 
-const getActivityZones = async ({token: access_token, activityId: id}) =>
+const getActivityZones = async ({activityId: id}) =>
   get({
-    args: {id, access_token},
+    args: {id},
     method: {category: "activities", name: "listZones"},
   })
 

@@ -1,45 +1,53 @@
-# 1.0.0 (2018-10-15)
+# 2.0.0 (2020-01-29)
 
--   Added: Initial commit
+-   Added: Strava OAuth 2 support
+-   Added: `generate-token` script
+-   Updated: Simpler configuration
+-   Updated: Better documentation
+-   Updated: Better logs
 
-# 1.0.1 (2018-10-16)
+# 1.4.0 (2019-07-01)
 
--   Fixed: Move `before` and `after` to `activitiesOptions`
--   Updated: Handle `Strava` API limits
+-   Updated: Errors handling
 
-# 1.1.0 (2018-10-19)
+# 1.3.4 (2019-06-14)
 
--   Added: `withZones` option to add zones to every activity (need Strava Summit Analysis Pack)
+-   Removed: Gatsby dependency
 
-# 1.2.0 (2018-11-27)
+# 1.3.3 (2019-02-24)
 
--   Added: `cacheDir` to activitiesOptions
+-   Updated: Error handling
 
-# 1.2.1 (2018-12-26)
+# 1.3.2 (2019-02-22)
 
--   Fixed: cache behavior
-
-# 1.2.2 (2019-01-07)
-
--   Fixed: Cast timestamp to Int
+-   Updated: Better debug logs
 
 # 1.3.0 (2019-01-24)
 
 -   Updated: Handle 10 and 13 digit timestamps
 -   Added: Debug option
 
-# 1.3.2 (2019-02-22)
+# 1.2.2 (2019-01-07)
 
--   Updated: Better debug logs
+-   Fixed: Cast timestamp to Int
 
-# 1.3.3 (2019-02-24)
+# 1.2.1 (2018-12-26)
 
--   Updated: Error handling
+-   Fixed: cache behavior
 
-# 1.3.4 (2019-06-14)
+# 1.2.0 (2018-11-27)
 
--   Removed: Gatsby dependency
+-   Added: `cacheDir` to activitiesOptions
 
-# 1.4.0 (2019-07-01)
+# 1.1.0 (2018-10-19)
 
--   Updated: Errors handling
+-   Added: `withZones` option to add zones to every activity (need Strava Summit Analysis Pack)
+
+# 1.0.1 (2018-10-16)
+
+-   Fixed: Move `before` and `after` to `activitiesOptions`
+-   Updated: Handle `Strava` API limits
+
+# 1.0.0 (2018-10-15)
+
+-   Added: Initial commit

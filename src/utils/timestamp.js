@@ -9,4 +9,4 @@ const to10DigitTimestamp = timestamp => {
   return Number.parseInt(timestamp)
 }
 
-module.exports = to10DigitTimestamp
+module.exports = {to10DigitTimestamp}

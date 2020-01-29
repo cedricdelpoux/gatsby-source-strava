@@ -1,7 +1,6 @@
-const get = require("./get.js")
+const {get} = require("./strava.js")
 
 const getAthlete = async ({
-  token,
   options: {
     withKoms = false,
     withRoutes = false,
@@ -9,73 +8,59 @@ const getAthlete = async ({
     withZones = false,
   },
 }) => {
-  try {
-    const athlete = await get({
-      args: {access_token: token},
-      method: {category: "athlete", name: "get"},
-    })
+  const athlete = await get({
+    args: {},
+    method: {category: "athlete", name: "get"},
+  })
 
-    const koms = withKoms
-      ? await getAthleteKoms({
-          athleteId: athlete.id,
-          token,
-        })
-      : null
+  const koms = withKoms
+    ? await getAthleteKoms({
+        athleteId: athlete.id,
+      })
+    : null
 
-    const routes = withRoutes
-      ? await getAthleteRoutes({
-          token,
-        })
-      : null
+  const routes = withRoutes ? await getAthleteRoutes() : null
 
-    const stats = withStats
-      ? await getAthleteStats({
-          athleteId: athlete.id,
-          token,
-        })
-      : null
+  const stats = withStats
+    ? await getAthleteStats({
+        athleteId: athlete.id,
+      })
+    : null
 
-    const zones = withZones
-      ? await getAthleteZones({
-          token,
-        })
-      : null
+  const zones = withZones ? await getAthleteZones() : null
 
-    const athleteWithOptions = {
-      ...athlete,
-      ...(koms ? {koms} : {}),
-      ...(routes ? {routes} : {}),
-      ...(stats ? {stats} : {}),
-      ...(zones ? {zones} : {}),
-    }
-
-    return athleteWithOptions
-  } catch (e) {
-    throw e
+  const athleteWithOptions = {
+    ...athlete,
+    ...(koms ? {koms} : {}),
+    ...(routes ? {routes} : {}),
+    ...(stats ? {stats} : {}),
+    ...(zones ? {zones} : {}),
   }
+
+  return athleteWithOptions
 }
 
-const getAthleteZones = ({token: access_token}) =>
+const getAthleteZones = () =>
   get({
-    args: {access_token},
+    args: {},
     method: {category: "athlete", name: "listZones"},
   })
 
-const getAthleteRoutes = ({token: access_token}) =>
+const getAthleteRoutes = () =>
   get({
-    args: {access_token},
+    args: {},
     method: {category: "athlete", name: "listRoutes"},
   })
 
-const getAthleteStats = ({token: access_token, athleteId: id}) =>
+const getAthleteStats = ({athleteId: id}) =>
   get({
-    args: {id, access_token},
+    args: {id},
     method: {category: "athletes", name: "stats"},
   })
 
-const getAthleteKoms = ({token: access_token, athleteId: id}) =>
+const getAthleteKoms = ({athleteId: id}) =>
   get({
-    args: {id, access_token},
+    args: {id},
     method: {category: "athletes", name: "listKoms"},
   })
 

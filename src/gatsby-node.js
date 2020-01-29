@@ -1,76 +1,59 @@
-const crypto = require("crypto")
-
 const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
+const {verifyToken} = require("./utils/strava.js")
 
 exports.sourceNodes = async (
-  {actions: {createNode}},
-  {activitiesOptions, athleteOptions, debug, token}
+  {actions, createNodeId, createContentDigest, reporter},
+  pluginOptions
 ) => {
-  if (!token) {
-    throw new Error("source-strava: Missing API token")
-  }
-
   try {
-    let heartrateMax
+    await verifyToken()
+
     const activities = await getActivities({
-      debug,
-      options: {
-        ...activitiesOptions,
-      },
-      token,
+      debug: pluginOptions.debug,
+      options: pluginOptions.activities,
+      reporter,
     })
 
     if (activities && activities.length > 0) {
       activities.forEach(activity => {
-        if (athleteOptions.computeHeartrateMax && activity.has_heartrate) {
-          if (!heartrateMax || activity.max_heartrate > heartrateMax) {
-            heartrateMax = activity.max_heartrate
-          }
+        if (pluginOptions.activities.extend) {
+          pluginOptions.activities.extend({activity})
         }
 
-        createNode({
+        actions.createNode({
           activity,
-          id: `Strava Activity: ${activity.id}`,
-          parent: "__SOURCE__",
-          children: [],
+          id: createNodeId(`StravaActivity${activity.id}`),
           internal: {
             type: "StravaActivity",
-            contentDigest: crypto
-              .createHash("md5")
-              .update(JSON.stringify(activity))
-              .digest("hex"),
+            contentDigest: createContentDigest(activity),
           },
         })
       })
     }
 
     const athlete = await getAthlete({
-      token,
-      options: athleteOptions,
+      options: pluginOptions.athlete,
     })
 
-    createNode({
-      athlete: {
-        ...athlete,
-        ...(athleteOptions.computeheartrateMax ? {heartrateMax} : {}),
-      },
-      id: `Strava Athlete: ${athlete.id}`,
-      parent: "__SOURCE__",
-      children: [],
+    if (pluginOptions.athlete.extend) {
+      pluginOptions.athlete.extend({activities, athlete})
+    }
+
+    actions.createNode({
+      athlete,
+      id: createNodeId(`StravaAthlete${athlete.id}`),
       internal: {
         type: "StravaAthlete",
-        contentDigest: crypto
-          .createHash("md5")
-          .update(JSON.stringify(athlete))
-          .digest("hex"),
+        contentDigest: createContentDigest(athlete),
       },
     })
   } catch (e) {
-    if (debug) {
-      // eslint-disable-next-line
-      console.error(e)
-    }
-    throw new Error(`source-strava: ${e.message}`)
+    reporter.error(
+      `source-strava: ${e.message}`,
+      pluginOptions.debug ? e : null
+    )
+
+    return
   }
 }
