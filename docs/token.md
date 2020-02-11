@@ -15,7 +15,7 @@ gatsby-source-strava-token
 
 ## Environment variable
 
-if `process.env.STRAVA_TOKEN` exists, it will take over the token file stored in the [cache folder](./cache.md).
+if `process.env.GATSBY_SOURCE_STRAVA_TOKEN` exists, it will take over the token file stored in the [cache folder](./cache.md).
 
 It is usefull on CDN like `Netlify`
 

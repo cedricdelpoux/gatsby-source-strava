@@ -60,8 +60,8 @@ class Cache {
   }
 
   getToken() {
-    if (process.env.STRAVA_TOKEN) {
-      const token = JSON.parse(process.env.STRAVA_TOKEN)
+    if (process.env.GATSBY_SOURCE_STRAVA_TOKEN) {
+      const token = JSON.parse(process.env.GATSBY_SOURCE_STRAVA_TOKEN)
       return token
     } else if (fs.existsSync(tokenPath)) {
       try {

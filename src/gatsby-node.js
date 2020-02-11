@@ -4,7 +4,8 @@ const {verifyToken} = require("./utils/strava.js")
 
 exports.sourceNodes = async (
   {actions, createNodeId, createContentDigest, reporter},
-  pluginOptions
+  pluginOptions,
+  done
 ) => {
   try {
     await verifyToken()
@@ -12,7 +13,6 @@ exports.sourceNodes = async (
     const activities = await getActivities({
       debug: pluginOptions.debug,
       options: pluginOptions.activities,
-      reporter,
     })
 
     if (activities && activities.length > 0) {
@@ -48,12 +48,15 @@ exports.sourceNodes = async (
         contentDigest: createContentDigest(athlete),
       },
     })
-  } catch (e) {
-    reporter.error(
-      `source-strava: ${e.message}`,
-      pluginOptions.debug ? e : null
-    )
 
-    return
+    done()
+  } catch (e) {
+    if (pluginOptions.debug) {
+      reporter.panic(`source-strava: `, e)
+    } else {
+      reporter.panic(`source-strava: ${e.message}`)
+    }
+
+    done()
   }
 }

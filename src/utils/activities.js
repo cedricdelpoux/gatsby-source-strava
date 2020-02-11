@@ -3,7 +3,7 @@ const sleep = require("system-sleep")
 const {get} = require("./strava.js")
 const {cache} = require("./cache.js")
 
-const getActivities = async ({debug, options, reporter}) => {
+const getActivities = async ({debug, options = {}}) => {
   let hasNextPage
   let page = 1
   let retry = false
@@ -17,7 +17,7 @@ const getActivities = async ({debug, options, reporter}) => {
   }
 
   if (debug && after) {
-    reporter.info(
+    console.info(
       "source-strava: Fetching activities since " +
         new Date(after * 1000).toLocaleString()
     )
@@ -58,15 +58,13 @@ const getActivities = async ({debug, options, reporter}) => {
       if (e.code === "SHORT_LIMIT") {
         retry = true
 
-        reporter.warn("source-strava: " + e.message)
+        console.warn("source-strava: " + e.message)
 
         const waintingTime = 900 // 15 minutes
         const newTryDate = new Date()
         newTryDate.setSeconds(newTryDate.getSeconds() + waintingTime)
 
-        reporter.info(
-          "source-strava: New try at " + newTryDate.toLocaleString()
-        )
+        console.info("source-strava: New try at " + newTryDate.toLocaleString())
 
         await sleep(waintingTime * 1000)
       } else {
@@ -76,7 +74,7 @@ const getActivities = async ({debug, options, reporter}) => {
   } while (hasNextPage || retry)
 
   if (debug) {
-    reporter.info(
+    console.info(
       `source-strava: ${
         newActivities.length
       } new activities ${new Date().toLocaleString()}`
@@ -107,74 +105,69 @@ const getActivitiesPageFull = async ({
     page,
   })
 
-  if (activitiesPage && activitiesPage.length > 0) {
-    const requests = await activitiesPage.map(
-      async activity =>
-        new Promise(async (resolve, reject) => {
-          try {
-            const comments = withComments
-              ? await getActivityComments({
-                  activityId: activity.id,
-                })
-              : null
+  if (!activitiesPage || activitiesPage.length === 0) {
+    return []
+  }
 
-            const kudos = withKudos
-              ? await getActivityKudos({
-                  activityId: activity.id,
-                })
-              : null
+  return Promise.all(
+    activitiesPage.map(async activity => {
+      const comments = withComments
+        ? await getActivityComments({
+            activityId: activity.id,
+          })
+        : null
 
-            const laps = withLaps
-              ? await getActivityLaps({
-                  activityId: activity.id,
-                })
-              : null
+      const kudos = withKudos
+        ? await getActivityKudos({
+            activityId: activity.id,
+          })
+        : null
 
-            const photos = withPhotos
-              ? await getActivityPhotos({
-                  activityId: activity.id,
-                })
-              : null
+      const laps = withLaps
+        ? await getActivityLaps({
+            activityId: activity.id,
+          })
+        : null
 
-            const related = withRelated
-              ? await getActivityRelated({
-                  activityId: activity.id,
-                })
-              : null
+      const photos = withPhotos
+        ? await getActivityPhotos({
+            activityId: activity.id,
+          })
+        : null
 
-            const streams = withStreams
-              ? await getActivityStreams({
-                  activityId: activity.id,
-                  streamsTypes,
-                })
-              : null
+      const related = withRelated
+        ? await getActivityRelated({
+            activityId: activity.id,
+          })
+        : null
 
-            const zones = withZones
-              ? await getActivityZones({
-                  activityId: activity.id,
-                })
-              : null
+      const streams = withStreams
+        ? await getActivityStreams({
+            activityId: activity.id,
+            streamsTypes,
+          })
+        : null
 
-            const activityFull = {
-              ...activity,
-              ...(comments && {comments}),
-              ...(kudos && {kudos}),
-              ...(laps && {laps}),
-              ...(photos && {photos}),
-              ...(related && {related}),
-              ...(streams && {streams}),
-              ...(zones && {zones}),
-            }
+      const zones = withZones
+        ? await getActivityZones({
+            activityId: activity.id,
+          })
+        : null
 
-            resolve(activityFull)
-          } catch (e) {
-            reject(e)
-          }
-        })
-    )
+      const activityFull = {
+        ...activity,
+        ...(comments && {comments}),
+        ...(kudos && {kudos}),
+        ...(laps && {laps}),
+        ...(photos && {photos}),
+        ...(related && {related}),
+        ...(streams && {streams}),
+        ...(zones && {zones}),
+      }
 
-    return await Promise.all(requests)
-  } else return []
+      return activityFull
+    })
+  )
 }
 
 const getActivitiesPage = async ({before, after, page}) =>
