@@ -6,7 +6,7 @@ const getAthlete = async ({
     withRoutes = false,
     withStats = false,
     withZones = false,
-  },
+  } = {},
 }) => {
   const athlete = await get({
     args: {},
