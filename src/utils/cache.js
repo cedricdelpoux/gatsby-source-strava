@@ -55,27 +55,32 @@ class Cache {
     return to10DigitTimestamp(lastFetched)
   }
 
-  setLastFetch(lastFetch) {
-    fs.writeFileSync(this.lastFetchPath, to10DigitTimestamp(lastFetch))
+  setLastFetch(newLastFetch) {
+    const oldLastFetched = this.getLastFetch()
+
+    if (newLastFetch > oldLastFetched) {
+      fs.writeFileSync(this.lastFetchPath, to10DigitTimestamp(newLastFetch))
+    }
   }
 
   getToken() {
-    if (process.env.GATSBY_SOURCE_STRAVA_TOKEN) {
-      const token = JSON.parse(process.env.GATSBY_SOURCE_STRAVA_TOKEN)
-      return token
-    } else if (fs.existsSync(tokenPath)) {
+    if (fs.existsSync(tokenPath)) {
       try {
         const token = JSON.parse(fs.readFileSync(tokenPath, "utf-8"))
         return token
       } catch (e) {
         return null
       }
+    } else if (process.env.GATSBY_SOURCE_STRAVA_TOKEN) {
+      const token = JSON.parse(process.env.GATSBY_SOURCE_STRAVA_TOKEN)
+      return token
     } else {
       return null
     }
   }
 
   setToken(token) {
+    console.log("setToken", token)
     const {
       client_id,
       client_secret,
