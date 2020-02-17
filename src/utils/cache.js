@@ -9,6 +9,21 @@ const ACTIVITIES_DIR = "activities"
 const stravaPath = path.join(process.cwd(), ".strava")
 const tokenPath = path.join(stravaPath, TOKEN_FILENAME)
 
+const isTokenValid = token => {
+  if (
+    token &&
+    token.client_id &&
+    token.client_secret &&
+    token.access_token &&
+    token.refresh_token &&
+    token.expires_at
+  ) {
+    return true
+  }
+
+  return false
+}
+
 class Cache {
   constructor() {
     if (!fs.existsSync(stravaPath)) {
@@ -64,23 +79,29 @@ class Cache {
   }
 
   getToken() {
+    if (process.env.GATSBY_SOURCE_STRAVA_TOKEN) {
+      const token = JSON.parse(process.env.GATSBY_SOURCE_STRAVA_TOKEN)
+
+      if (isTokenValid(token)) {
+        return token
+      }
+    }
+
     if (fs.existsSync(tokenPath)) {
       try {
         const token = JSON.parse(fs.readFileSync(tokenPath, "utf-8"))
-        return token
+        if (isTokenValid(token)) {
+          return token
+        }
       } catch (e) {
-        return null
+        // Do nothing
       }
-    } else if (process.env.GATSBY_SOURCE_STRAVA_TOKEN) {
-      const token = JSON.parse(process.env.GATSBY_SOURCE_STRAVA_TOKEN)
-      return token
-    } else {
-      return null
     }
+
+    throw new Error("Invalid token. Please regenerate one")
   }
 
   setToken(token) {
-    console.log("setToken", token)
     const {
       client_id,
       client_secret,

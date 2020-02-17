@@ -4,51 +4,30 @@ const errors = require("request-promise/errors")
 const {cache} = require("./cache.js")
 const SourceStravaError = require("./error.js")
 
-const isTokenValid = token => {
-  if (
-    token &&
-    token.client_id &&
-    token.client_secret &&
-    token.access_token &&
-    token.refresh_token &&
-    token.expires_at
-  ) {
-    return true
-  }
-
-  return false
-}
-
 const verifyToken = async () => {
   const token = cache.getToken()
 
-  if (isTokenValid(token)) {
-    strava.config({
+  strava.config({
+    client_id: token.client_id,
+    client_secret: token.client_secret,
+  })
+
+  let expired = true
+
+  if (token.expires_at) {
+    const nowDate = new Date()
+    const expirationDate = new Date(token.expires_at * 1000)
+    expired = expirationDate.getTime() < nowDate.getTime()
+  }
+
+  if (expired) {
+    const refreshedToken = await strava.oauth.refreshToken(token.refresh_token)
+
+    cache.setToken({
       client_id: token.client_id,
       client_secret: token.client_secret,
+      ...refreshedToken,
     })
-
-    let expired = true
-
-    if (token.expires_at) {
-      const nowDate = new Date()
-      const expirationDate = new Date(token.expires_at * 1000)
-      expired = expirationDate.getTime() < nowDate.getTime()
-    }
-
-    if (expired) {
-      const refreshedToken = await strava.oauth.refreshToken(
-        token.refresh_token
-      )
-
-      cache.setToken({
-        client_id: token.client_id,
-        client_secret: token.client_secret,
-        ...refreshedToken,
-      })
-    }
-  } else {
-    throw new Error("Invalid token. Please regenerate one")
   }
 }
 
