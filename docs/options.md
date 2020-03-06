@@ -21,20 +21,22 @@ module.exports = {
                     // Extending options
                     // --------------------------------
                     //
+                    // When using extending options, it's recommanded to reduce the activities count per page
+                    perPage: 200,
                     // Add comments to every activity
-                    withComments: true,
+                    withComments: false,
                     // Add kudos to every activity
-                    withKudos: true,
+                    withKudos: false,
                     // Add laps to every activity
-                    withLaps: true,
+                    withLaps: false,
                     // Add photos to every activity
-                    withPhotos: true,
+                    withPhotos: false,
                     // Add related activities to every activity
-                    withRelated: true,
-                    // Add streams to every activity (see streamTypes)
-                    withStreams: true,
+                    withRelated: false,
                     // Add zones to every activity (need Strava Summit Analysis Pack)
-                    withZones: true,
+                    withZones: false,
+                    // Add streams to every activity (see streamTypes)
+                    withStreams: false,
                     //
                     // Add analyzed data to every activity
                     // withStreams option must be true

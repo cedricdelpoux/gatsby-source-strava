@@ -86,8 +86,6 @@ const getActivities = async ({debug, options = {}}) => {
 
 const getActivitiesPageFull = async ({
   options: {
-    after = null,
-    before = null,
     streamsTypes = [],
     withComments = false,
     withKudos = false,
@@ -96,12 +94,12 @@ const getActivitiesPageFull = async ({
     withRelated = false,
     withStreams = false,
     withZones = false,
+    ...options
   },
   page,
 }) => {
   const activitiesPage = await getActivitiesPage({
-    after,
-    before,
+    ...options,
     page,
   })
 
@@ -170,13 +168,18 @@ const getActivitiesPageFull = async ({
   )
 }
 
-const getActivitiesPage = async ({before, after, page}) =>
+const getActivitiesPage = async ({
+  before = null,
+  after = null,
+  perPage = 200,
+  page,
+}) =>
   get({
     args: {
       ...(after ? {after} : {}),
       ...(before ? {before} : {}),
       page,
-      per_page: 30,
+      per_page: perPage,
     },
     method: {category: "athlete", name: "listActivities"},
   })
