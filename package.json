@@ -14,6 +14,7 @@
   ],
   "main": "index.js",
   "dependencies": {
+    "fs-extra": "^9.0.0",
     "inquirer": "^7.0.6",
     "strava-v3": "^2.0.5",
     "system-sleep": "^1.3.6"
@@ -32,6 +33,8 @@
     "gatsby": "^2.0.0"
   },
   "scripts": {
+    "clean": "rm -rf ./utils ./gatsby-node.js ./on-post-build.js ./on-pre-bootstrap.js ./source-nodes.js",
+    "prebuild": "yarn clean",
     "build": "cross-env BABEL_ENV=production babel src --out-dir .",
     "lint": "eslint --ext .js src",
     "prepublishOnly": "yarn build",

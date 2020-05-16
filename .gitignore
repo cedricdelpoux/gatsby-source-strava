@@ -1,3 +1,6 @@
 node_modules
 /utils
 /gatsby-node.js
+/on-post-build.js
+/on-pre-bootstrap.js
+/source-nodes.js

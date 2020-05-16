@@ -1,23 +1,23 @@
 const sleep = require("system-sleep")
 
 const {get} = require("./strava.js")
-const {cache} = require("./cache.js")
+// const {cache} = require("./cache.js")
 
-const getActivities = async ({debug, options = {}}) => {
+const getActivities = async ({cache, debug, options = {}, reporter}) => {
   let hasNextPage
   let page = 1
   let retry = false
   let after = options.after
-  const newActivities = []
-  const cachedActivities = await cache.getActivities()
-  const lastTimestamp = await cache.getLastFetch()
+  let newActivitiesCount = 0
+  let activities = await cache.get("strava.activities")
+  const lastFetch = await cache.get("strava.last-fetch")
 
-  if (!after && lastTimestamp) {
-    after = lastTimestamp
+  if (!after && lastFetch) {
+    after = lastFetch
   }
 
   if (debug && after) {
-    console.info(
+    reporter.info(
       "source-strava: Fetching activities since " +
         new Date(after * 1000).toLocaleString()
     )
@@ -43,28 +43,33 @@ const getActivities = async ({debug, options = {}}) => {
         const lastActivityTimestamp = Math.max(...activitiesTimestamp)
 
         activitiesPageFull.forEach(async activityFull => {
-          newActivities.push(activityFull)
-
-          await cache.setActivity(activityFull)
-          await cache.setLastFetch(lastActivityTimestamp)
+          newActivitiesCount += 1
+          activities[activityFull.id] = activityFull
         })
+
+        await cache.set("strava.activities", activities)
+        await cache.set("strava.last-fetch", lastActivityTimestamp)
 
         hasNextPage = activitiesPageFull.length > 0
         page++
       } else {
-        await cache.setLastFetch(Date.now())
+        await cache.set("strava.last-fetch", Date.now())
       }
     } catch (e) {
+      await cache.set("strava.activities", activities)
+
       if (e.code === "SHORT_LIMIT") {
         retry = true
 
-        console.warn("source-strava: " + e.message)
+        reporter.warn("source-strava: " + e.message)
 
         const waintingTime = 900 // 15 minutes
         const newTryDate = new Date()
         newTryDate.setSeconds(newTryDate.getSeconds() + waintingTime)
 
-        console.info("source-strava: New try at " + newTryDate.toLocaleString())
+        reporter.info(
+          "source-strava: New try at " + newTryDate.toLocaleString()
+        )
 
         await sleep(waintingTime * 1000)
       } else {
@@ -74,14 +79,12 @@ const getActivities = async ({debug, options = {}}) => {
   } while (hasNextPage || retry)
 
   if (debug) {
-    console.info(
-      `source-strava: ${
-        newActivities.length
-      } new activities ${new Date().toLocaleString()}`
+    reporter.info(
+      `source-strava: ${newActivitiesCount} new activities ${new Date().toLocaleString()}`
     )
   }
 
-  return [...cachedActivities, ...newActivities]
+  return Object.values(activities)
 }
 
 const getActivitiesPageFull = async ({

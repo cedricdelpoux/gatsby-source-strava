@@ -1,9 +1,14 @@
 #! /usr/bin/env node
 
 const strava = require("strava-v3")
+const path = require("path")
 const inquirer = require("inquirer")
+const fs = require("fs")
 
-const {cache} = require("../utils/cache")
+const CACHE_PATH = path.join(
+  process.cwd(),
+  "node_modules/.cache/gatsby-source-strava"
+)
 
 const generateToken = async () => {
   console.log("Create a Strava application API at")
@@ -58,6 +63,7 @@ const generateToken = async () => {
       access_token,
       refresh_token,
       expires_at,
+      expires_in,
     } = await strava.oauth.getToken(authorization_code)
     const token = {
       client_id,
@@ -65,9 +71,14 @@ const generateToken = async () => {
       access_token,
       refresh_token,
       expires_at,
+      expires_in,
     }
 
-    cache.setToken(token)
+    if (!fs.existsSync(CACHE_PATH)) {
+      fs.mkdirSync(CACHE_PATH, {recursive: true})
+    }
+
+    fs.writeFileSync(path.join(CACHE_PATH, "token.json"), JSON.stringify(token))
 
     console.log("")
     console.log("Token generated successfully")

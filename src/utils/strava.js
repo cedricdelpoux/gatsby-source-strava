@@ -1,11 +1,12 @@
 const strava = require("strava-v3")
 const errors = require("request-promise/errors")
 
-const {cache} = require("./cache.js")
+// const {cache} = require("./cache.js")
 const SourceStravaError = require("./error.js")
 
-const verifyToken = async () => {
-  const token = cache.getToken()
+const verifyToken = async cache => {
+  const tokenString = await cache.get("strava.token")
+  const token = JSON.parse(tokenString)
 
   strava.config({
     client_id: token.client_id,
