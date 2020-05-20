@@ -64,4 +64,4 @@ This project is licensed under the MIT License - see the
 
 [npm-badge]: https://img.shields.io/npm/v/gatsby-source-strava.svg?style=flat-square
 [npm]: https://www.npmjs.org/package/gatsby-source-strava
-[github-issue]: https://github.com/xuopled/gatsby-source-strava/issues/new
+[github-issue]: https://github.com/cedricdelpoux/gatsby-source-strava/issues/new
