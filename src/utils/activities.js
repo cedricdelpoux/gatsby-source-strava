@@ -1,23 +1,37 @@
 const sleep = require("system-sleep")
 
-const {get} = require("./strava.js")
-const {cache} = require("./cache.js")
+const {strava} = require("./strava.js")
+const {to10DigitTimestamp} = require("./timestamp.js")
 
-const getActivities = async ({debug, options = {}}) => {
+const getActivities = async ({cache, debug, options = {}, reporter}) => {
   let hasNextPage
   let page = 1
   let retry = false
   let after = options.after
-  const newActivities = []
-  const cachedActivities = await cache.getActivities()
-  const lastTimestamp = await cache.getLastFetch()
+  let activities = []
+  let cachedActivitiesIds = (await cache.get("activities")) || []
 
-  if (!after && lastTimestamp) {
-    after = lastTimestamp
+  if (cachedActivitiesIds && cachedActivitiesIds.length > 0) {
+    cachedActivitiesIds.forEach(async activityId => {
+      const activity = await cache.get(activityId)
+      activities[activityId] = activity
+    })
+
+    if (debug) {
+      reporter.success(
+        `source-strava: ${cachedActivitiesIds.length} activities restored from cache`
+      )
+    }
+  }
+
+  const lastFetch = await cache.get("last-fetch")
+
+  if (!after && activities.length > 0 && lastFetch) {
+    after = to10DigitTimestamp(lastFetch)
   }
 
   if (debug && after) {
-    console.info(
+    reporter.info(
       "source-strava: Fetching activities since " +
         new Date(after * 1000).toLocaleString()
     )
@@ -43,28 +57,33 @@ const getActivities = async ({debug, options = {}}) => {
         const lastActivityTimestamp = Math.max(...activitiesTimestamp)
 
         activitiesPageFull.forEach(async activityFull => {
-          newActivities.push(activityFull)
-
-          await cache.setActivity(activityFull)
-          await cache.setLastFetch(lastActivityTimestamp)
+          activities[activityFull.id] = activityFull
+          await cache.set(activityFull.id, activityFull)
         })
+
+        await cache.set("activities", Object.keys(activities))
+        await cache.set("last-fetch", lastActivityTimestamp)
 
         hasNextPage = activitiesPageFull.length > 0
         page++
       } else {
-        await cache.setLastFetch(Date.now())
+        await cache.set("last-fetch", Date.now())
       }
     } catch (e) {
+      await cache.set("activities", activities)
+
       if (e.code === "SHORT_LIMIT") {
         retry = true
 
-        console.warn("source-strava: " + e.message)
+        reporter.warn("source-strava: " + e.message)
 
         const waintingTime = 900 // 15 minutes
         const newTryDate = new Date()
         newTryDate.setSeconds(newTryDate.getSeconds() + waintingTime)
 
-        console.info("source-strava: New try at " + newTryDate.toLocaleString())
+        reporter.info(
+          "source-strava: New try at " + newTryDate.toLocaleString()
+        )
 
         await sleep(waintingTime * 1000)
       } else {
@@ -73,15 +92,8 @@ const getActivities = async ({debug, options = {}}) => {
     }
   } while (hasNextPage || retry)
 
-  if (debug) {
-    console.info(
-      `source-strava: ${
-        newActivities.length
-      } new activities ${new Date().toLocaleString()}`
-    )
-  }
-
-  return [...cachedActivities, ...newActivities]
+  // return [...cachedActivities, ...newActivities]
+  return Object.values(activities)
 }
 
 const getActivitiesPageFull = async ({
@@ -174,7 +186,7 @@ const getActivitiesPage = async ({
   perPage = 200,
   page,
 }) =>
-  get({
+  strava.fetch({
     args: {
       ...(after ? {after} : {}),
       ...(before ? {before} : {}),
@@ -185,37 +197,37 @@ const getActivitiesPage = async ({
   })
 
 const getActivityLaps = async ({activityId: id}) =>
-  get({
+  strava.fetch({
     args: {id},
     method: {category: "activities", name: "listLaps"},
   })
 
 const getActivityComments = async ({activityId: id}) =>
-  get({
+  strava.fetch({
     args: {id},
     method: {category: "activities", name: "listComments"},
   })
 
 const getActivityKudos = async ({activityId: id}) =>
-  get({
+  strava.fetch({
     args: {id},
     method: {category: "activities", name: "listKudos"},
   })
 
 const getActivityPhotos = async ({activityId: id}) =>
-  get({
+  strava.fetch({
     args: {id},
     method: {category: "activities", name: "listPhotos"},
   })
 
 const getActivityRelated = async ({activityId: id}) =>
-  get({
+  strava.fetch({
     args: {id},
     method: {category: "activities", name: "listRelated"},
   })
 
 const getActivityStreams = ({activityId: id, streamsTypes: types}) =>
-  get({
+  strava.fetch({
     args: {
       id,
       types,
@@ -238,7 +250,7 @@ const getActivityStreams = ({activityId: id, streamsTypes: types}) =>
   })
 
 const getActivityZones = async ({activityId: id}) =>
-  get({
+  strava.fetch({
     args: {id},
     method: {category: "activities", name: "listZones"},
   })

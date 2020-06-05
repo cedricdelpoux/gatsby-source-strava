@@ -1,17 +1,19 @@
 const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
-const {verifyToken} = require("./utils/strava.js")
+const {strava} = require("./utils/strava.js")
 
 exports.sourceNodes = async (
-  {actions, createNodeId, createContentDigest, reporter},
+  {actions, createNodeId, createContentDigest, reporter, cache},
   pluginOptions = {}
 ) => {
   try {
-    await verifyToken()
+    await strava.init()
 
     const activities = await getActivities({
       debug: pluginOptions.debug,
       options: pluginOptions.activities,
+      cache,
+      reporter,
     })
 
     if (activities && activities.length > 0) {
@@ -29,6 +31,8 @@ exports.sourceNodes = async (
           },
         })
       })
+
+      reporter.success(`source-strava: ${activities.length} activities fetched`)
     }
 
     const athlete = await getAthlete({
@@ -47,6 +51,8 @@ exports.sourceNodes = async (
         contentDigest: createContentDigest(athlete),
       },
     })
+
+    reporter.success(`source-strava: athlete fetched`)
   } catch (e) {
     if (pluginOptions.debug) {
       reporter.panic(`source-strava: `, e)
