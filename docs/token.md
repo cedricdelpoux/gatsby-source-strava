@@ -1,22 +1,37 @@
 # Token
 
-Token can be provided to `gatsby-source-strava` with two different way.
-
-## Token file
+Token must be provided with an environment variable: `process.env.GATSBY_SOURCE_STRAVA_TOKEN`.
 
 `gatsby-source-strava` provides a command-line script to generate a Strava token.
+
+> You must be in the root folder of your project to run the script
 
 ```shell
 gatsby-source-strava-token
 ```
 
-> You must be in the root folder of your project to run the script because it will write the token to your file system.
-> Path should be /.strava
+Follow the instructions and the token will be added to your different `.env` files with the format: `GATSBY_SOURCE_STRAVA_TOKEN={...}`
 
-## Environment variable
+> If you have multiple `.env` files for your different environments, the script will write the token at the end of each file
 
-if `process.env.GATSBY_SOURCE_STRAVA_TOKEN` exists, it will take over the token file stored in the [cache folder](./cache.md).
+You should add your `.env` files to your `.gitignore` because it contains some sensitive informations.
 
-It is usefull on CDN like `Netlify`
+# Troubleshooting
 
-Copy content of `/.strava/token.json` and paste it in a environment variable
+## `'gatsby-source-strava-token' is not recognized as an internal or external command,`
+
+Add an `npm` script to your `package.json`:
+
+```
+"scripts": {
+    "token": "gatsby-source-strava-token"
+}
+```
+
+Then generate a token:
+
+```
+yarn token
+# or
+npm run token
+```

@@ -3,9 +3,13 @@
 const strava = require("strava-v3")
 const inquirer = require("inquirer")
 const fs = require("fs")
-const path = require("path")
+const glob = require("glob")
 
-const ENV_FILE_PATH = path.join(process.cwd(), ".env")
+const envFiles = glob.sync(".env*")
+
+if (envFiles.length === 0) {
+  envFiles.push(".env")
+}
 
 const generateToken = async () => {
   console.log("Create a Strava application API at")
@@ -69,13 +73,15 @@ const generateToken = async () => {
       expires_at,
     }
 
-    fs.appendFileSync(
-      ENV_FILE_PATH,
-      `GATSBY_SOURCE_GOOGLE_DOCS_TOKEN=${JSON.stringify(token)}\n`
-    )
+    envFiles.forEach(file => {
+      fs.appendFileSync(
+        file,
+        `GATSBY_SOURCE_GOOGLE_DOCS_TOKEN=${JSON.stringify(token)}\n`
+      )
+    })
 
     console.log("")
-    console.log("Token added successfully to your .env file")
+    console.log("Token added successfully to your .env files")
     console.log("Enjoy `gatsby-source-strava` plugin")
   } catch (e) {
     console.error(e.message)
