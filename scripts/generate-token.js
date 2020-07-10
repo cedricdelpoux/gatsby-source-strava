@@ -76,7 +76,7 @@ const generateToken = async () => {
     envFiles.forEach(file => {
       fs.appendFileSync(
         file,
-        `GATSBY_SOURCE_GOOGLE_DOCS_TOKEN=${JSON.stringify(token)}\n`
+        `GATSBY_SOURCE_STRAVA_TOKEN=${JSON.stringify(token)}\n`
       )
     })
 

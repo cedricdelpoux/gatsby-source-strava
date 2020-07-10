@@ -2,6 +2,10 @@ const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
 const {strava} = require("./utils/strava.js")
 
+const dotenv = require("dotenv")
+
+dotenv.config()
+
 exports.sourceNodes = async (
   {actions, createNodeId, createContentDigest, reporter, cache},
   pluginOptions = {}
