@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const stravaApi = require("strava-v3")
 const errors = require("request-promise/errors")
 
