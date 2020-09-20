@@ -1,6 +1,9 @@
 # gatsby-source-strava
 
-[![npm package][npm-badge]][npm]
+[![Npm version][badge-npm]][npm]
+[![Npm downloads][badge-npm-dl]][npm]
+[![MIT license][badge-licence]](./LICENCE.md)
+[![PRs welcome][badge-prs-welcome]](#contributing)
 
 Gatsby plugin to use Strava as a data source
 
@@ -51,6 +54,9 @@ See [CHANGELOG](./CHANGELOG.md)
 This project is licensed under the MIT License - see the
 [LICENCE](./LICENCE.md) file for details
 
-[npm-badge]: https://img.shields.io/npm/v/gatsby-source-strava.svg?style=flat-square
+[badge-npm]: https://img.shields.io/npm/v/gatsby-source-strava.svg?style=flat-square
+[badge-npm-dl]: https://img.shields.io/npm/dt/gatsby-source-strava.svg?style=flat-square
+[badge-licence]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square
+[badge-prs-welcome]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square
 [npm]: https://www.npmjs.org/package/gatsby-source-strava
 [github-issue]: https://github.com/cedricdelpoux/gatsby-source-strava/issues/new
