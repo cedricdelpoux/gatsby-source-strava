@@ -1,0 +1,21 @@
+{
+  "name": "gatsby-source-strava-example",
+  "private": true,
+  "scripts": {
+    "build": "gatsby build",
+    "clean": "gatsby clean",
+    "dev": "gatsby develop",
+    "serve": "gatsby serve",
+    "token": "../utils/generate-token.js"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "gatsby": "^2.24.41",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0"
+  },
+  "devDependencies": {
+    "eslint-plugin-react": "^7.20.6",
+    "prettier": "2.0.5"
+  }
+}
