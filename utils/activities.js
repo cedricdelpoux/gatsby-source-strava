@@ -12,7 +12,7 @@ const getActivities = async ({cache, debug, options = {}, reporter}) => {
   let cachedActivitiesIds = (await cache.get("activities")) || []
 
   if (cachedActivitiesIds && cachedActivitiesIds.length > 0) {
-    cachedActivitiesIds.forEach(async activityId => {
+    cachedActivitiesIds.forEach(async (activityId) => {
       const activity = await cache.get(activityId)
       activities[activityId] = activity
     })
@@ -51,12 +51,12 @@ const getActivities = async ({cache, debug, options = {}, reporter}) => {
       })
 
       if (activitiesPageFull.length > 0) {
-        const activitiesTimestamp = activitiesPageFull.map(activity =>
+        const activitiesTimestamp = activitiesPageFull.map((activity) =>
           new Date(activity.start_date).getTime()
         )
         const lastActivityTimestamp = Math.max(...activitiesTimestamp)
 
-        activitiesPageFull.forEach(async activityFull => {
+        activitiesPageFull.forEach(async (activityFull) => {
           activities[activityFull.id] = activityFull
           await cache.set(activityFull.id, activityFull)
         })
@@ -120,7 +120,7 @@ const getActivitiesPageFull = async ({
   }
 
   return Promise.all(
-    activitiesPage.map(async activity => {
+    activitiesPage.map(async (activity) => {
       const comments = withComments
         ? await getActivityComments({
             activityId: activity.id,
@@ -236,7 +236,7 @@ const getActivityStreams = ({activityId: id, streamsTypes: types}) =>
       key_by_type: true,
     },
     method: {category: "streams", name: "activity"},
-    format: payload => {
+    format: (payload) => {
       const streams = {}
 
       if (payload && payload.length > 0) {

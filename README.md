@@ -15,17 +15,40 @@ Gatsby plugin to use Strava as a data source
 yarn add gatsby-source-strava
 ```
 
-2. Open a terminal at the root of your project and [Generate a token](./docs/token.md)
+2. [Generate a token](./docs/token.md)
+
+The package needs 3 `.env` variables with the following format to work:
+
+```dotenv
+STRAVA_CLIENT_ID=2845
+STRAVA_CLIENT_SECRET=c3d62caed3sjf4vdjsb096d010d81f52a17ac5
+STRAVA_TOKEN={"access_token":"ya...J0","refresh_token":"1..mE","expires_at":1581439030,"expires_in":21600}
+```
+
+`gatsby-remark-strava` expose a script to make the generation easier.
+
+Open a terminal at the root of your project and type:
 
 ```shell
-gatsby-source-strava-token
+gatsby-remark-strava-token
 ```
 
 3. [Add the plugin](./docs/options.md) in your `gatsby-config.js` file
 
 ```js
+require("dotenv").config()
+
 module.exports = {
-    plugins: ["gatsby-source-strava"],
+    plugins: [
+        {
+            resolve: "gatsby-source-strava",
+            options: {
+                stravaClientId: process.env.STRAVA_CLIENT_ID,
+                stravaClientSecret: process.env.STRAVA_CLIENT_SECRET,
+                stravaToken: process.env.STRAVA_TOKEN,
+            },
+        },
+    ],
 }
 ```
 

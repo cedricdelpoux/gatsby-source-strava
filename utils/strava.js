@@ -1,5 +1,3 @@
-require('dotenv').config()
-
 const stravaApi = require("strava-v3")
 const errors = require("request-promise/errors")
 
@@ -24,14 +22,18 @@ class Strava {
     this.token = null
   }
 
-  async init() {
-    if (process.env.GATSBY_SOURCE_STRAVA_TOKEN) {
-      this.token = JSON.parse(process.env.GATSBY_SOURCE_STRAVA_TOKEN)
+  async init({clientId, clientSecret, token}) {
+    this.token = JSON.parse(token)
+
+    if (!this.isTokenValid()) {
+      throw new Error(
+        "Invalid token. Please regenerate one using `gatsby-source-strava-token` command"
+      )
     }
 
     stravaApi.config({
-      client_id: this.token.client_id,
-      client_secret: this.token.client_secret,
+      client_id: clientId,
+      client_secret: clientSecret,
     })
 
     let expired = true
@@ -53,19 +55,11 @@ class Strava {
         ...refreshedToken,
       }
     }
-
-    if (!this.isTokenValid()) {
-      throw new Error(
-        "Invalid token. Please regenerate one using `gatsby-source-strava-token` command"
-      )
-    }
   }
 
   isTokenValid() {
     if (
       this.token &&
-      this.token.client_id &&
-      this.token.client_secret &&
       this.token.access_token &&
       this.token.refresh_token &&
       this.token.expires_at
@@ -97,14 +91,14 @@ class Strava {
 
       stravaApi[method.category]
         [method.name]({...args, access_token})
-        .then(payload => {
+        .then((payload) => {
           if (format) {
             return resolve(format(payload))
           } else {
             return resolve(payload)
           }
         })
-        .catch(errors.StatusCodeError, statusCodeError => {
+        .catch(errors.StatusCodeError, (statusCodeError) => {
           // Too Many Requests
           if (statusCodeError.statusCode === 429) {
             return reject(

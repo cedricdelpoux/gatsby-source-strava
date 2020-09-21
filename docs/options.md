@@ -1,8 +1,27 @@
 # Options
 
+## Mandatory options
+
+```js
+require("dotenv").config()
+
+module.exports = {
+    plugins: [
+        {
+            resolve: "gatsby-source-strava",
+            options: {
+                stravaClientId: process.env.STRAVA_CLIENT_ID,
+                stravaClientSecret: process.env.STRAVA_CLIENT_SECRET,
+                stravaToken: process.env.STRAVA_TOKEN,
+            },
+        },
+    ],
+}
+```
+
 With the default configuration, `gatsby-source-strava` fetch [Athlete][strava-athlete] and [Athlete activities][strava-athlete-activities].
 
-> ⚠️ _Be carefull with your Strava Rate Limits_ ⚠️
+> ⚠️ _Be careful with your Strava Rate Limits_ ⚠️
 >
 > Read [Rate Limits](./rate-limits.md) documentation.
 
@@ -105,7 +124,7 @@ module.exports = {
                     // ------
                     extend: ({activities, athlete}) => {
                         let heartrateMax
-                        activities.forEach(activity => {
+                        activities.forEach((activity) => {
                             if (activity.has_heartrate) {
                                 if (
                                     !heartrateMax ||
@@ -127,7 +146,7 @@ module.exports = {
 
 ### Debug
 
-For a better stack trace and more informoation, try the following option in your `gatsby-config.js`:
+For a better stack trace and more information, try the following option in your `gatsby-config.js`:
 
 ```js
 module.exports = {

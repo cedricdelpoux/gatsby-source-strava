@@ -1,4 +1,4 @@
-const to10DigitTimestamp = timestamp => {
+const to10DigitTimestamp = (timestamp) => {
   if (!timestamp) return null
 
   // 13 digit timestamp

@@ -6,8 +6,27 @@ exports.sourceNodes = async (
   {actions, createNodeId, createContentDigest, reporter, cache},
   pluginOptions = {}
 ) => {
+  if (!pluginOptions.stravaClientId) {
+    reporter.warn("source-strava: Missing `stravaClientId` option")
+    return
+  }
+
+  if (!pluginOptions.stravaClientSecret) {
+    reporter.warn("source-strava: Missing `stravaClientSecret` option")
+    return
+  }
+
+  if (!pluginOptions.stravaToken) {
+    reporter.warn("source-strava: Missing `stravaToken` option")
+    return
+  }
+
   try {
-    await strava.init()
+    await strava.init({
+      clientId: pluginOptions.stravaClientId,
+      clientSecret: pluginOptions.stravaClientSecret,
+      token: pluginOptions.stravaToken,
+    })
 
     const activities = await getActivities({
       debug: pluginOptions.debug,
@@ -17,7 +36,7 @@ exports.sourceNodes = async (
     })
 
     if (activities && activities.length > 0) {
-      activities.forEach(activity => {
+      activities.forEach((activity) => {
         if (pluginOptions.activities && pluginOptions.activities.extend) {
           pluginOptions.activities.extend({activity})
         }
