@@ -1,9 +1,19 @@
-# gatsby-source-strava
+<div align="center">
+  <h1>gatsby-source-strava</h1>
+  <br/>
+  <p>
+    <img src="./logo.png" alt="gatsby-source-strava" height="100px">
+  </p>
+  <br/>
 
 [![Npm version][badge-npm]][npm]
 [![Npm downloads][badge-npm-dl]][npm]
 [![MIT license][badge-licence]](./LICENCE.md)
 [![PRs welcome][badge-prs-welcome]](#contributing)
+
+</div>
+
+---
 
 Gatsby plugin to use Strava as a data source
 
