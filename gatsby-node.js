@@ -43,6 +43,7 @@ exports.sourceNodes = async (
 
         actions.createNode({
           ...activity,
+          id: activity.id.toString(),
           internal: {
             type: "StravaActivity",
             contentDigest: createContentDigest(activity),
@@ -63,6 +64,7 @@ exports.sourceNodes = async (
 
     actions.createNode({
       ...athlete,
+      id: athlete.id.toString(),
       internal: {
         type: "StravaAthlete",
         contentDigest: createContentDigest(athlete),
