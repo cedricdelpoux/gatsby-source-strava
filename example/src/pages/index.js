@@ -1,5 +1,5 @@
-import React from "react"
 import {graphql} from "gatsby"
+import React from "react"
 
 const token = process.env.GATSBY_MAPBOX_TOKEN
 const stravaColor = "fc4c02"
@@ -12,7 +12,7 @@ export default ({data: {activities}}) => {
         gridGap: "16px",
       }}
     >
-      {activities.nodes.map(({activity}) => {
+      {activities.nodes.map((activity) => {
         const polyline = encodeURIComponent(activity.map.summary_polyline)
         const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/static/path+${stravaColor}(${polyline})/auto/200x200?access_token=${token}&logo=false&attribution=false`
         return (
@@ -52,20 +52,17 @@ export const pageQuery = graphql`
   query IndexQuery {
     activities: allStravaActivity(
       filter: {
-        activity: {
-          type: {in: ["Run", "Ride"]}
-          map: {summary_polyline: {ne: null}}
-        }
+        type: {in: ["Run", "Ride"]}
+        map: {summary_polyline: {ne: null}}
+        private: {eq: false}
       }
-      sort: {fields: [activity___start_date], order: DESC}
+      sort: {fields: [start_date], order: DESC}
     ) {
       nodes {
-        activity {
-          id
-          name
-          map {
-            summary_polyline
-          }
+        id
+        name
+        map {
+          summary_polyline
         }
       }
     }
