@@ -3,7 +3,7 @@ const getAthlete = require("./utils/athlete.js")
 const {strava} = require("./utils/strava.js")
 
 exports.sourceNodes = async (
-  {actions, createNodeId, createContentDigest, reporter, cache},
+  {actions, createContentDigest, reporter, cache},
   pluginOptions = {}
 ) => {
   if (!pluginOptions.stravaClientId) {
@@ -42,8 +42,7 @@ exports.sourceNodes = async (
         }
 
         actions.createNode({
-          activity,
-          id: createNodeId(`StravaActivity${activity.id}`),
+          ...activity,
           internal: {
             type: "StravaActivity",
             contentDigest: createContentDigest(activity),
@@ -63,8 +62,7 @@ exports.sourceNodes = async (
     }
 
     actions.createNode({
-      athlete,
-      id: createNodeId(`StravaAthlete${athlete.id}`),
+      ...athlete,
       internal: {
         type: "StravaAthlete",
         contentDigest: createContentDigest(athlete),
