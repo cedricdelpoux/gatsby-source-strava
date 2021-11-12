@@ -3,7 +3,7 @@ import React from "react"
 
 const token = process.env.GATSBY_MAPBOX_TOKEN
 const stravaColor = "fc4c02"
-export default ({data: {activities}}) => {
+const PageIndex = ({data: {activities}}) => {
   return (
     <div
       style={{
@@ -47,6 +47,8 @@ export default ({data: {activities}}) => {
     </div>
   )
 }
+
+export default PageIndex
 
 export const pageQuery = graphql`
   query IndexQuery {
