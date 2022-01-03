@@ -39,7 +39,7 @@
     "gatsby": "^3.0.0 || ^4.0.0"
   },
   "scripts": {
-    "lint": "eslint gatsby-node.js utils example",
+    "lint": "eslint *.js gatsby-node.js utils example/src",
     "prepublishOnly": "yarn lint"
   },
   "bin": {
