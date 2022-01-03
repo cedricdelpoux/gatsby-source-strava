@@ -13,7 +13,7 @@ const getActivities = async ({cache, debug, options = {}, reporter}) => {
 
   if (cachedActivitiesIds && cachedActivitiesIds.length > 0) {
     cachedActivitiesIds.forEach(async (activityId) => {
-      const activity = await cache.get(activityId)
+      const activity = await cache.get(`${activityId}`)
       activities[activityId] = activity
     })
 
@@ -58,7 +58,7 @@ const getActivities = async ({cache, debug, options = {}, reporter}) => {
 
         activitiesPageFull.forEach(async (activityFull) => {
           activities[activityFull.id] = activityFull
-          await cache.set(activityFull.id, activityFull)
+          await cache.set(`${activityFull.id}`, activityFull)
         })
 
         await cache.set("activities", Object.keys(activities))
