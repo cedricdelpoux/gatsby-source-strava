@@ -151,12 +151,17 @@ const getActivitiesPageFull = async ({
           })
         : null
 
-      const streams = withStreams
-        ? await getActivityStreams({
-            activityId: activity.id,
-            streamsTypes,
-          })
-        : null
+      const fetchActivityStreams =
+        (typeof withStreams === "function" && withStreams(activity)) ||
+        withStreams === true
+
+      const streams =
+        fetchActivityStreams && streamsTypes.length > 0
+          ? await getActivityStreams({
+              activityId: activity.id,
+              streamsTypes,
+            })
+          : null
 
       const zones = withZones
         ? await getActivityZones({

@@ -41,24 +41,26 @@ module.exports = {
                     // --------------------------------
                     //
                     // When using extending options, it's recommanded to reduce the activities count per page
-                    perPage: 200,
+                    perPage: 200, // 200 is max. You will get error with more.
                     // Add comments to every activity
-                    withComments: false,
+                    withComments: true,
                     // Add kudos to every activity
-                    withKudos: false,
+                    withKudos: true,
                     // Add laps to every activity
-                    withLaps: false,
+                    withLaps: true,
                     // Add photos to every activity
-                    withPhotos: false,
+                    withPhotos: true,
                     // Add related activities to every activity
-                    withRelated: false,
+                    withRelated: true,
                     // Add zones to every activity (need Strava Summit Analysis Pack)
-                    withZones: false,
+                    withZones: true,
                     // Add streams to every activity (see streamTypes)
-                    withStreams: false,
+                    withStreams: true,
+                    // --- OR
+                    withStreams: (activity) => activity.id === ID,
                     //
                     // Add analyzed data to every activity
-                    // withStreams option must be true
+                    // withStreams option must be true or a function to works
                     // See https://developers.strava.com/docs/reference/#api-models-StreamSet
                     streamsTypes: [
                         "time",
@@ -80,6 +82,12 @@ module.exports = {
                     before: "1539500400",
                     // Timestamp for filtering activities that have taken place AFTER a certain time
                     after: "1539500400",
+                    after:
+                        new Date(
+                            new Date().getFullYear(),
+                            new Date().getMonth() - 1,
+                            new Date().getDate()
+                        ).getTime() / 1000, // Last month activities only
                     //
                     // Add custom data
                     // ------

@@ -35,12 +35,12 @@ STRAVA_CLIENT_SECRET=c3d62caed3sjf4vdjsb096d010d81f52a17ac5
 STRAVA_TOKEN={"access_token":"ya...J0","refresh_token":"1..mE","expires_at":1581439030,"expires_in":21600}
 ```
 
-`gatsby-remark-strava` expose a script to make the generation easier.
+`gatsby-source-strava` expose a script to make the generation easier.
 
 Open a terminal at the root of your project and type:
 
 ```shell
-gatsby-remark-strava-token
+gatsby-source-strava-token
 ```
 
 3. [Add the plugin](./docs/options.md) in your `gatsby-config.js` file
@@ -65,13 +65,6 @@ module.exports = {
 That's it!
 
 > For advanced configuration, please read [options](./docs/options.md) documentation.
-
-## Showcase
-
-You are using `gatsby-source-strava` for your website?
-Thank you!
-
-Please add your website to the [Showcase](./showcase.yml)
 
 ## Contributing
 
