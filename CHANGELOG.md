@@ -1,3 +1,11 @@
+# 2.3.0
+
+-   feat: update `withStreams` option to be a boolean or a function
+
+# 2.2.0
+
+-   fix: use activity id string as cache key
+
 # 2.1.0
 
 -   Added: **Gatsby v4** compatibility
