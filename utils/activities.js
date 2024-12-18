@@ -1,4 +1,5 @@
 const sleep = require("system-sleep")
+const polyline = require("@mapbox/polyline")
 
 const {strava} = require("./strava.js")
 const {to10DigitTimestamp} = require("./timestamp.js")
@@ -169,8 +170,13 @@ const getActivitiesPageFull = async ({
           })
         : null
 
+      const latlngStream = activity.streams && activity.streams.latlng
+      const mapPolyline = activity.map && activity.map.summary_polyline
+      const coordinates = latlngStream || polyline.decode(mapPolyline)
+
       const activityFull = {
         ...activity,
+        ...(coordinates && {coordinates}),
         ...(comments && {comments}),
         ...(kudos && {kudos}),
         ...(laps && {laps}),
