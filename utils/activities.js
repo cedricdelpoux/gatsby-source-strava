@@ -172,7 +172,8 @@ const getActivitiesPageFull = async ({
 
       const latlngStream = activity.streams && activity.streams.latlng
       const mapPolyline = activity.map && activity.map.summary_polyline
-      const coordinates = latlngStream || polyline.decode(mapPolyline)
+      const points = latlngStream || polyline.decode(mapPolyline)
+      const coordinates = points.map(([lat, lng]) => [lng, lat]) // x,y
 
       const activityFull = {
         ...activity,
