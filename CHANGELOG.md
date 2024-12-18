@@ -1,3 +1,7 @@
+# 2.4.0
+
+-   feat: add `coordinates` field to activity
+
 # 2.3.0
 
 -   feat: update `withStreams` option to be a boolean or a function

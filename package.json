@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-strava",
-  "version": "2.2.0",
+  "version": "2.4.0",
   "description": "Gatsby plugin to use Strava as a data source",
   "repository": "https://github.com/cedricdelpoux/gatsby-source-strava",
   "author": "Cédric Delpoux",
