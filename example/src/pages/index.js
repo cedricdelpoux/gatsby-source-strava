@@ -1,5 +1,5 @@
-import {graphql} from "gatsby"
 import React from "react"
+import {graphql} from "gatsby"
 
 const token = process.env.GATSBY_MAPBOX_TOKEN
 const stravaColor = "fc4c02"
@@ -58,7 +58,7 @@ export const pageQuery = graphql`
         map: {summary_polyline: {ne: null}}
         private: {eq: false}
       }
-      sort: {fields: [start_date], order: DESC}
+      sort: {start_date: DESC}
     ) {
       nodes {
         id
