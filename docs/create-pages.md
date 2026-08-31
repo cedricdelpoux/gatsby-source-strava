@@ -3,36 +3,35 @@
 A short exemple of `gatsby-node.js` to create pages for activities
 
 ```js
-module.exports.createPages = ({graphql, actions}) => {
+const path = require("path")
+
+exports.createPages = async ({graphql, actions, reporter}) => {
     const {createPage} = actions
-    return new Promise((resolve, reject) => {
-        resolve(
-            graphql(`
-                {
-                    activities: allStravaActivity {
-                        edges {
-                            node {
-                                activity {
-                                    id
-                                }
-                            }
-                        }
-                    }
+
+    const {data, errors} = await graphql(`
+        {
+            activities: allStravaActivity {
+                nodes {
+                    id
+                    name
                 }
-            `).then(({data: {activities}}) => {
-                activities.edges.forEach(({node: {activity}}) => {
-                    createPage({
-                        path: `/activity/${activity.id}`,
-                        component: path.resolve(
-                            "./src/templates/activity/index.js"
-                        ),
-                        context: {
-                            id: parseInt(activity.id),
-                        },
-                    })
-                })
-            })
-        )
+            }
+        }
+    `)
+
+    if (errors) {
+        reporter.panicOnBuild("Error while querying Strava activities", errors)
+        return
+    }
+
+    data.activities.nodes.forEach((activity) => {
+        createPage({
+            path: `/activity/${activity.id}`,
+            component: path.resolve("./src/templates/activity.js"),
+            context: {
+                id: activity.id,
+            },
+        })
     })
 }
 ```
@@ -40,21 +39,23 @@ module.exports.createPages = ({graphql, actions}) => {
 ## Activity template
 
 ```js
-export default ({
-    data: {
-        stravaActivity: {activity},
-    },
-}) => (
+import React from "react"
+import {graphql} from "gatsby"
+
+const Activity = ({data: {stravaActivity}}) => (
     <div>
-        <h1>{activity.name}</h1>
+        <h1>{stravaActivity.name}</h1>
     </div>
 )
+
+export default Activity
+
 export const pageQuery = graphql`
-    query($id: Float) {
-        stravaActivity(activity: {id: {eq: $id}}) {
-            activity {
-                name
-            }
+    query ($id: String) {
+        stravaActivity(id: {eq: $id}) {
+            name
+            distance
+            start_date
         }
     }
 `
