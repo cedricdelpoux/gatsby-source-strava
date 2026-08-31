@@ -9,6 +9,7 @@
     "token": "../utils/generate-token.js"
   },
   "dependencies": {
+    "@mapbox/polyline": "^1.2.1",
     "dotenv": "^8.2.0",
     "gatsby": "5.14.0",
     "react": "link:../node_modules/react",

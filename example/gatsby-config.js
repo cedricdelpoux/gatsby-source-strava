@@ -1,5 +1,7 @@
 require("dotenv").config()
 
+const polyline = require("@mapbox/polyline")
+
 module.exports = {
   plugins: [
     {
@@ -14,9 +16,17 @@ module.exports = {
           after:
             new Date(
               new Date().getFullYear(),
-              new Date().getMonth() - 1,
+              new Date().getMonth(),
               new Date().getDate()
             ).getTime() / 1000,
+          extend: ({activity}) => {
+            // Add geoJSON map
+            if (activity.map && activity.map.summary_polyline) {
+              activity.map.geoJSON = polyline.toGeoJSON(
+                activity.map.summary_polyline
+              )
+            }
+          },
         },
       },
     },
