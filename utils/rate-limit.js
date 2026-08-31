@@ -1,9 +1,25 @@
-const WAITING_TIME = 900 // 15 minutes, the length of the short limit window
+const WINDOW_MINUTES = 15
+const MARGIN_SECONDS = 5
 
 // `system-sleep` was used here, but it is a native module blocking the whole
 // event loop for the 15 min of the wait
 const sleep = (duration) =>
   new Promise((resolve) => setTimeout(resolve, duration))
+
+// Strava resets the short rate limit on natural 15 minutes intervals, at 0, 15,
+// 30 and 45 minutes after the hour, not 15 minutes after the limit was reached.
+// Waiting for the next of those saves up to 15 minutes of build time.
+const getNextWindowDate = () => {
+  const date = new Date()
+
+  date.setMinutes(
+    (Math.floor(date.getMinutes() / WINDOW_MINUTES) + 1) * WINDOW_MINUTES,
+    MARGIN_SECONDS,
+    0
+  )
+
+  return date
+}
 
 const isRateLimitError = (error) =>
   error.code === "SHORT_LIMIT" || error.code === "LONG_LIMIT"
@@ -17,13 +33,15 @@ const handleRateLimit = async ({error, options = {}, reporter}) => {
 
   // Waiting only makes sense for the short limit, the long one resets daily
   if (error.code === "SHORT_LIMIT" && options.waitOnRateLimit === true) {
-    const newTryDate = new Date()
-    newTryDate.setSeconds(newTryDate.getSeconds() + WAITING_TIME)
+    const newTryDate = getNextWindowDate()
+    const waitingTime = newTryDate.getTime() - Date.now()
 
-    reporter.warn("source-strava: Waiting 15 min.")
+    reporter.warn(
+      `source-strava: Waiting ${Math.ceil(waitingTime / 60000)} min.`
+    )
     reporter.info("source-strava: New try at " + newTryDate.toLocaleString())
 
-    await sleep(WAITING_TIME * 1000)
+    await sleep(waitingTime)
 
     return true
   }

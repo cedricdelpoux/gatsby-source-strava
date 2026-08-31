@@ -26,7 +26,8 @@ By default, `gatsby-source-strava` warns and stops fetching when the short rate
 limit is reached: the activities already fetched are kept, the missing ones are
 fetched on the next build.
 
-To wait 15 minutes and resume instead, use the `waitOnRateLimit` option:
+To wait for the window to open again and resume instead, use the
+`waitOnRateLimit` option:
 
 ```js
 module.exports = {
@@ -40,6 +41,9 @@ module.exports = {
     ],
 }
 ```
+
+The wait targets the next quarter hour rather than a fixed 15 minutes, so it
+lasts 15 minutes at worst and around 7 on average.
 
 Build time can be very long if you fetch all your history with thousand of
 activities. It will only be long the first fetch because this plugin caches
