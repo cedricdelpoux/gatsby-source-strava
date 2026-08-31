@@ -11,29 +11,34 @@ const getActivities = async ({
   rateLimit,
   reporter,
 }) => {
-  let hasNextPage
   let page = 1
-  let retry = false
+  let hasNextPage
+  let mustRetry = false
+  let isTruncated = false
   let after = options.after
-  let activities = []
-  let cachedActivitiesIds = (await cache.get("activities")) || []
+  const activities = {}
+  const cachedActivitiesIds = (await cache.get("activities")) || []
+  const fetchDate = Date.now()
 
-  if (cachedActivitiesIds && cachedActivitiesIds.length > 0) {
-    cachedActivitiesIds.forEach(async (activityId) => {
-      const activity = await cache.get(`${activityId}`)
+  for (const activityId of cachedActivitiesIds) {
+    const activity = await cache.get(`${activityId}`)
+
+    if (activity) {
       activities[activityId] = activity
-    })
-
-    if (debug) {
-      reporter.success(
-        `source-strava: ${cachedActivitiesIds.length} activities restored from cache`
-      )
     }
+  }
+
+  const restoredCount = Object.keys(activities).length
+
+  if (restoredCount > 0 && debug) {
+    reporter.success(
+      `source-strava: ${restoredCount} activities restored from cache`
+    )
   }
 
   const lastFetch = await cache.get("last-fetch")
 
-  if (!after && activities.length > 0 && lastFetch) {
+  if (!after && restoredCount > 0 && lastFetch) {
     after = to10DigitTimestamp(lastFetch)
   }
 
@@ -45,7 +50,7 @@ const getActivities = async ({
   }
 
   do {
-    retry = false
+    mustRetry = false
     hasNextPage = false
 
     try {
@@ -58,40 +63,38 @@ const getActivities = async ({
       })
 
       if (activitiesPageFull.length > 0) {
-        const activitiesTimestamp = activitiesPageFull.map((activity) =>
-          new Date(activity.start_date).getTime()
-        )
-        const lastActivityTimestamp = Math.max(...activitiesTimestamp)
-
-        activitiesPageFull.forEach(async (activityFull) => {
+        for (const activityFull of activitiesPageFull) {
           activities[activityFull.id] = activityFull
           await cache.set(`${activityFull.id}`, activityFull)
-        })
+        }
 
         await cache.set("activities", Object.keys(activities))
-        await cache.set("last-fetch", lastActivityTimestamp)
 
-        hasNextPage = activitiesPageFull.length > 0
+        hasNextPage = true
         page++
-      } else {
-        await cache.set("last-fetch", Date.now())
       }
     } catch (e) {
       if (!isRateLimitError(e)) throw e
 
-      retry = await handleRateLimit({
+      mustRetry = await handleRateLimit({
         error: e,
         options: rateLimit,
         reporter,
       })
 
-      if (!retry) {
+      if (!mustRetry) {
+        isTruncated = true
+
         reporter.warn(
           "source-strava: Fetch stopped, some activities are missing"
         )
       }
     }
-  } while (hasNextPage || retry)
+  } while (hasNextPage || mustRetry)
+
+  if (!isTruncated) {
+    await cache.set("last-fetch", fetchDate)
+  }
 
   return Object.values(activities)
 }
