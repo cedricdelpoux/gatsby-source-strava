@@ -1,5 +1,4 @@
 const stravaApi = require("strava-v3")
-const errors = require("request-promise/errors")
 
 class StravaError extends Error {
   constructor(code, category, method, ...args) {
@@ -129,15 +128,20 @@ class Strava {
             return resolve(payload)
           }
         })
-        .catch(errors.StatusCodeError, (statusCodeError) => {
+        .catch((error) => {
+          // Not an HTTP error: a network failure, a timeout... Rejecting is
+          // what stops the build, letting it through would hang it forever.
+          if (error.name !== "StatusCodeError") {
+            return reject(error)
+          }
+
           // Too Many Requests
-          if (statusCodeError.statusCode === 429) {
+          if (error.statusCode === 429) {
             return reject(
               this.handleTooManyRequests({
                 category,
                 method: name,
-                headers:
-                  statusCodeError.response && statusCodeError.response.headers,
+                headers: error.response && error.response.headers,
               })
             )
           }
@@ -146,7 +150,7 @@ class Strava {
             this.handleError({
               category,
               method: name,
-              error: statusCodeError.error.message,
+              error: (error.error && error.error.message) || error.message,
             })
           )
         })
