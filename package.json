@@ -2,7 +2,10 @@
   "name": "gatsby-source-strava",
   "version": "3.0.0",
   "description": "Gatsby plugin to use Strava as a data source",
-  "repository": "https://github.com/cedricdelpoux/gatsby-source-strava",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cedricdelpoux/gatsby-source-strava.git"
+  },
   "author": "Cédric Delpoux",
   "license": "MIT",
   "private": false,
@@ -43,7 +46,7 @@
     "prepublishOnly": "yarn lint"
   },
   "bin": {
-    "gatsby-source-strava-token": "./utils/generate-token.js"
+    "gatsby-source-strava-token": "utils/generate-token.js"
   },
   "lint-staged": {
     "*.js": [
