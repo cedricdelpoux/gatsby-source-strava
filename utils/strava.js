@@ -111,9 +111,17 @@ class Strava {
   async fetch({args, method, format}) {
     return new Promise((resolve, reject) => {
       const {access_token} = this.token
+      const params = {...args, access_token}
+      const category = method.category || "endpoint"
+      const name = method.name || method.path
 
-      stravaApi[method.category]
-        [method.name]({...args, access_token})
+      // `strava-v3` has no method for a few endpoints, which are called by
+      // path through the http client every other method already uses
+      const request = method.path
+        ? stravaApi.activities.client.getEndpoint(method.path, params)
+        : stravaApi[method.category][method.name](params)
+
+      request
         .then((payload) => {
           if (format) {
             return resolve(format(payload))
@@ -126,8 +134,8 @@ class Strava {
           if (statusCodeError.statusCode === 429) {
             return reject(
               this.handleTooManyRequests({
-                category: method.category,
-                method: method.name,
+                category,
+                method: name,
                 headers:
                   statusCodeError.response && statusCodeError.response.headers,
               })
@@ -136,8 +144,8 @@ class Strava {
 
           return reject(
             this.handleError({
-              category: method.category,
-              method: method.name,
+              category,
+              method: name,
               error: statusCodeError.error.message,
             })
           )

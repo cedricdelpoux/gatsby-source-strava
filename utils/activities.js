@@ -106,7 +106,6 @@ const getActivitiesPageFull = async ({
     withKudos = false,
     withLaps = false,
     withPhotos = false,
-    withRelated = false,
     withStreams = false,
     withZones = false,
     ...options
@@ -148,12 +147,6 @@ const getActivitiesPageFull = async ({
           })
         : null
 
-      const related = withRelated
-        ? await getActivityRelated({
-            activityId: activity.id,
-          })
-        : null
-
       const fetchActivityStreams =
         (typeof withStreams === "function" && withStreams(activity)) ||
         withStreams === true
@@ -185,7 +178,6 @@ const getActivitiesPageFull = async ({
         ...(kudos && {kudos}),
         ...(laps && {laps}),
         ...(photos && {photos}),
-        ...(related && {related}),
         ...(streams && {streams}),
         ...(zones && {zones}),
       }
@@ -231,14 +223,8 @@ const getActivityKudos = async ({activityId: id}) =>
 
 const getActivityPhotos = async ({activityId: id}) =>
   strava.fetch({
-    args: {id},
-    method: {category: "activities", name: "listPhotos"},
-  })
-
-const getActivityRelated = async ({activityId: id}) =>
-  strava.fetch({
-    args: {id},
-    method: {category: "activities", name: "listRelated"},
+    args: {},
+    method: {path: `activities/${id}/photos`},
   })
 
 const getActivityStreams = ({activityId: id, streamsTypes: types}) =>

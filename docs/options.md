@@ -35,7 +35,7 @@ module.exports = {
         {
             resolve: "gatsby-source-strava",
             options: {
-                activitiesOptions: {
+                activities: {
                     //
                     // Extending options
                     // --------------------------------
@@ -50,8 +50,6 @@ module.exports = {
                     withLaps: true,
                     // Add photos to every activity
                     withPhotos: true,
-                    // Add related activities to every activity
-                    withRelated: true,
                     // Add zones to every activity (need Strava Summit Analysis Pack)
                     withZones: true,
                     // Add streams to every activity (see streamTypes)
@@ -81,13 +79,11 @@ module.exports = {
                     // Timestamp for filtering activities that have taken place BEFORE a certain time
                     before: "1539500400",
                     // Timestamp for filtering activities that have taken place AFTER a certain time
+                    //  ⚠️ Keep `after` a fixed timestamp. Computing it when the config is loaded,
+                    // `new Date(...)` for instance, gives it a new value every day. Gatsby deletes
+                    // its whole cache as soon as plugin options change, so your history would be
+                    // fetched again from scratch, daily.
                     after: "1539500400",
-                    after:
-                        new Date(
-                            new Date().getFullYear(),
-                            new Date().getMonth() - 1,
-                            new Date().getDate()
-                        ).getTime() / 1000, // Last month activities only
                     //
                     // Add custom data
                     // ------
@@ -102,7 +98,8 @@ module.exports = {
 }
 ```
 
-> The filtering options `after` will take over the `last-fetch` timestamp used internally by `gatsby-source-strava` to fetch only new activities. Use with caution. Otherwise, you will reach your [Rate Limits](./rate-limits.md) regularly.
+> The filtering options `after` will take over the `last-fetch` timestamp used internally by `gatsby-source-strava` to fetch only new activities. Use with caution. Otherwise, you will reach your [Rate Limits](./rate-limits.md) regularly. `waitOnRateLimit` and `stopOnRateLimit` decide what happens when a Strava rate
+> limit is reached.
 
 ## Athlete
 
@@ -152,7 +149,7 @@ module.exports = {
 }
 ```
 
-### Debug
+## Debug
 
 For a better stack trace and more information, try the following option in your `gatsby-config.js`:
 

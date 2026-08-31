@@ -60,8 +60,8 @@ const getAthleteStats = ({athleteId: id}) =>
 
 const getAthleteKoms = ({athleteId: id}) =>
   strava.fetch({
-    args: {id},
-    method: {category: "athletes", name: "listKoms"},
+    args: {},
+    method: {path: `athletes/${id}/koms`},
   })
 
 module.exports = getAthlete

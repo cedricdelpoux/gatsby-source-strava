@@ -15,10 +15,10 @@ The 15 minutes window resets on the quarter hour, the daily one at midnight
 UTC.
 
 Fetching activities costs 1 request per page of 200 activities. Then each
-`with` option costs 1 request per activity, so enabling the 7 of them
-(`withComments`, `withKudos`, `withLaps`, `withPhotos`, `withRelated`,
-`withStreams`, `withZones`) lets you fetch around 14 activities before reaching
-the short rate limit.
+`with` option costs 1 request per activity, so enabling the 6 of them
+(`withComments`, `withKudos`, `withLaps`, `withPhotos`, `withStreams`,
+`withZones`) lets you fetch around 16 activities before reaching the short rate
+limit.
 
 ## Short Rate Limit
 
