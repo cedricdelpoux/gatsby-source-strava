@@ -1,6 +1,11 @@
 const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
 const {strava} = require("./utils/strava.js")
+const {types} = require("./utils/types.js")
+
+exports.createSchemaCustomization = ({actions}) => {
+  actions.createTypes(types)
+}
 
 exports.sourceNodes = async (
   {actions, createContentDigest, reporter, cache},
