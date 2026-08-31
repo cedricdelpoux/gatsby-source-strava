@@ -1,10 +1,16 @@
-const sleep = require("system-sleep")
 const polyline = require("@mapbox/polyline")
 
+const {handleRateLimit, isRateLimitError} = require("./rate-limit.js")
 const {strava} = require("./strava.js")
 const {to10DigitTimestamp} = require("./timestamp.js")
 
-const getActivities = async ({cache, debug, options = {}, reporter}) => {
+const getActivities = async ({
+  cache,
+  debug,
+  options = {},
+  rateLimit,
+  reporter,
+}) => {
   let hasNextPage
   let page = 1
   let retry = false
@@ -71,29 +77,22 @@ const getActivities = async ({cache, debug, options = {}, reporter}) => {
         await cache.set("last-fetch", Date.now())
       }
     } catch (e) {
-      await cache.set("activities", activities)
+      if (!isRateLimitError(e)) throw e
 
-      if (e.code === "SHORT_LIMIT") {
-        retry = true
+      retry = await handleRateLimit({
+        error: e,
+        options: rateLimit,
+        reporter,
+      })
 
-        reporter.warn("source-strava: " + e.message)
-
-        const waintingTime = 900 // 15 minutes
-        const newTryDate = new Date()
-        newTryDate.setSeconds(newTryDate.getSeconds() + waintingTime)
-
-        reporter.info(
-          "source-strava: New try at " + newTryDate.toLocaleString()
+      if (!retry) {
+        reporter.warn(
+          "source-strava: Fetch stopped, some activities are missing"
         )
-
-        await sleep(waintingTime * 1000)
-      } else {
-        throw e
       }
     }
   } while (hasNextPage || retry)
 
-  // return [...cachedActivities, ...newActivities]
   return Object.values(activities)
 }
 

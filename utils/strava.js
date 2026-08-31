@@ -17,6 +17,27 @@ class StravaError extends Error {
   }
 }
 
+// Strava sends an overall rate limit and a read only one, which is half of it.
+// This plugin only reads, so the read limits are the ones that bind first, and
+// `strava-v3` only keeps track of the overall ones.
+const parseRateLimits = (headers = {}) => {
+  const limit = headers["x-readratelimit-limit"] || headers["x-ratelimit-limit"]
+  const usage = headers["x-readratelimit-usage"] || headers["x-ratelimit-usage"]
+
+  if (!limit || !usage) return null
+
+  const [shortTermLimit, longTermLimit] = limit.split(",").map(Number)
+  const [shortTermUsage, longTermUsage] = usage.split(",").map(Number)
+  const limits = {
+    shortTermLimit,
+    longTermLimit,
+    shortTermUsage,
+    longTermUsage,
+  }
+
+  return Object.values(limits).some(Number.isNaN) ? null : limits
+}
+
 class Strava {
   constructor() {
     this.token = null
@@ -74,13 +95,15 @@ class Strava {
     return new StravaError("error", category, method, error)
   }
 
-  handleTooManyRequests({category, method}) {
-    const {longTermUsage, longTermLimit} = stravaApi.rateLimiting
-    const isLong = longTermUsage > longTermLimit ? true : false
+  handleTooManyRequests({category, method, headers}) {
+    const {shortTermUsage, shortTermLimit, longTermUsage, longTermLimit} =
+      parseRateLimits(headers) || stravaApi.rateLimiting
+
+    const isLong = longTermLimit > 0 && longTermUsage >= longTermLimit
     const type = isLong ? "LONG_LIMIT" : "SHORT_LIMIT"
     const message = isLong
-      ? "Rate Limit Exceeded."
-      : "Short Rate Limit Exceeded. Waiting 15 min."
+      ? `Long Rate Limit Exceeded. ${longTermUsage}/${longTermLimit} daily requests.`
+      : `Short Rate Limit Exceeded. ${shortTermUsage}/${shortTermLimit} requests per 15 min.`
 
     return new StravaError(type, category, method, message)
   }
@@ -105,6 +128,8 @@ class Strava {
               this.handleTooManyRequests({
                 category: method.category,
                 method: method.name,
+                headers:
+                  statusCodeError.response && statusCodeError.response.headers,
               })
             )
           }

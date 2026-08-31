@@ -2,22 +2,86 @@
 
 ⚠️ _Be carefull with your Strava Rate Limits_ ⚠️
 
-Short Rate Limit: 600 requests every 15 minutes
-Long Rate Limit: 30000 daily
+Short Rate Limit: 100 requests every 15 minutes
+Long Rate Limit: 1000 daily
 
-Each option represent 1 request.
+Strava applies two limits: an overall one, 200 requests every 15 minutes and
+2000 daily, and a stricter read only one, half of it. This plugin only reads,
+so the read limits above are the ones you reach first. Limits are set per
+application: check the `x-readratelimit-limit` response header or your
+[application settings][strava-settings] to know yours.
 
-If you enable the 22 options, you will be able to fetch only 27 activities before reaching the short rate Limit.
+The 15 minutes window resets on the quarter hour, the daily one at midnight
+UTC.
+
+Fetching activities costs 1 request per page of 200 activities. Then each
+`with` option costs 1 request per activity, so enabling the 7 of them
+(`withComments`, `withKudos`, `withLaps`, `withPhotos`, `withRelated`,
+`withStreams`, `withZones`) lets you fetch around 14 activities before reaching
+the short rate limit.
 
 ## Short Rate Limit
 
-`gatsby-source-strava` will wait 15 minutes if you reach the short rate limit.
+By default, `gatsby-source-strava` warns and stops fetching when the short rate
+limit is reached: the activities already fetched are kept, the missing ones are
+fetched on the next build.
 
-Build time can be very long if you fetch all your history with thousand of activities.
-It will only be long the first fetch because this plugin cache data.
+To wait 15 minutes and resume instead, use the `waitOnRateLimit` option:
 
-See [Cache](./cache.md) documentation.
+```js
+module.exports = {
+    plugins: [
+        {
+            resolve: "gatsby-source-strava",
+            options: {
+                waitOnRateLimit: true,
+            },
+        },
+    ],
+}
+```
+
+Build time can be very long if you fetch all your history with thousand of
+activities. It will only be long the first fetch because this plugin caches
+data.
 
 ## Long Rate Limit
 
-`gatsby-source-strava` will throw an error if you reach the long rate limit.
+The daily limit only resets at midnight UTC, so waiting is pointless:
+`gatsby-source-strava` always stops fetching when it is reached.
+
+## Failing the build
+
+With the `stopOnRateLimit` option, reaching any of the two limits throws
+instead of building a site with partial data:
+
+```js
+module.exports = {
+    plugins: [
+        {
+            resolve: "gatsby-source-strava",
+            options: {
+                stopOnRateLimit: true,
+            },
+        },
+    ],
+}
+```
+
+Both options apply to every Strava call, activities and athlete alike.
+
+## Combining both options
+
+The two options are complementary rather than exclusive: `waitOnRateLimit`
+decides whether to wait, `stopOnRateLimit` what to do when waiting is not an
+option. Setting both is the safest combination, waiting for what is worth
+waiting for and failing rather than publishing an incomplete site:
+
+| `waitOnRateLimit` | `stopOnRateLimit` | Short rate limit | Long rate limit |
+| ----------------- | ----------------- | ---------------- | --------------- |
+| false _(default)_ | false _(default)_ | keeps partial    | keeps partial   |
+| true              | false             | waits 15 min     | keeps partial   |
+| false             | true              | build fails      | build fails     |
+| true              | true              | waits 15 min     | build fails     |
+
+[strava-settings]: https://www.strava.com/settings/api

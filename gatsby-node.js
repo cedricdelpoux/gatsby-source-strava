@@ -1,5 +1,6 @@
 const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
+const {fetchWithRateLimit} = require("./utils/rate-limit.js")
 const {strava} = require("./utils/strava.js")
 const {types} = require("./utils/types.js")
 
@@ -33,9 +34,15 @@ exports.sourceNodes = async (
       token: pluginOptions.stravaToken,
     })
 
+    const rateLimit = {
+      stopOnRateLimit: pluginOptions.stopOnRateLimit,
+      waitOnRateLimit: pluginOptions.waitOnRateLimit,
+    }
+
     const activities = await getActivities({
       debug: pluginOptions.debug,
       options: pluginOptions.activities,
+      rateLimit,
       cache,
       reporter,
     })
@@ -59,9 +66,16 @@ exports.sourceNodes = async (
       reporter.success(`source-strava: ${activities.length} activities fetched`)
     }
 
-    const athlete = await getAthlete({
-      options: pluginOptions.athlete,
+    const athlete = await fetchWithRateLimit({
+      fetch: () => getAthlete({options: pluginOptions.athlete}),
+      options: rateLimit,
+      reporter,
     })
+
+    if (!athlete) {
+      reporter.warn("source-strava: Athlete not fetched")
+      return
+    }
 
     if (pluginOptions.athlete && pluginOptions.athlete.extend) {
       pluginOptions.athlete.extend({activities, athlete})
