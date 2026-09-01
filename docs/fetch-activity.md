@@ -18,22 +18,58 @@ rather than its simplified version.
 The command reads your `.env` files the same way your `gatsby-config.js` does,
 and never moves the cursor: the next build still fetches only what is new.
 
+Running it again never drops what an earlier run added: an option not passed
+this time falls back to what is already in the store, and streams are merged
+type by type, so asking for `heartrate` after a `latlng` run keeps both.
+
 ## Options
 
-| Option              | Effect                                                    |
-| ------------------- | --------------------------------------------------------- |
-| `--streams [types]` | Add streams, comma separated, all of them when left empty |
-| `--comments`        | Add comments                                              |
-| `--kudos`           | Add kudos                                                 |
-| `--laps`            | Add laps                                                  |
-| `--photos`          | Add photos                                                |
-| `--zones`           | Add zones, needs a Strava subscription                    |
-| `--all`             | Every option above, every stream included                 |
-| `--dir <path>`      | Store directory, defaults to `.strava`                    |
-| `--help`            | Show the usage                                            |
+| Option              | Effect                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `--streams [types]` | Add streams, comma separated, all of them when left empty           |
+| `--comments`        | Add comments                                                        |
+| `--kudos`           | Add kudos                                                           |
+| `--laps`            | Add laps                                                            |
+| `--photos`          | Add photos                                                          |
+| `--zones`           | Add zones, needs a Strava subscription                              |
+| `--refresh`         | Re-fetch the activity itself, to pick up an edit made on strava.com |
+| `--all`             | Every option above, `--refresh` included                            |
+| `--dir <path>`      | Store directory, defaults to `.strava`                              |
+| `--help`            | Show the usage                                                      |
 
-Each option costs one request against your
-[rate limits](./rate-limits.md), on that single activity.
+Each option costs one request against your [rate limits](./rate-limits.md), on
+that single activity. `--refresh` is skipped by default, and implied the first
+time an activity is fetched — there being nothing yet to add options onto.
+
+## Picking up an edit made on strava.com
+
+The plugin never asks Strava again for an activity older than its cursor, so
+this is how you refresh one after editing it: its name, description, gear, or
+anything else that isn't a stream, comments, kudos, laps, photos or zones.
+
+```shell
+gatsby-source-strava-activity 4291234567 --refresh
+```
+
+Skipping `--refresh` on an activity already in the store, with no other option
+either, is a no-op and the command fails rather than doing nothing silently:
+
+```shell
+$ gatsby-source-strava-activity 4291234567
+Nothing to fetch: pass --refresh, or an option like --streams, --photos...
+```
+
+## Adding to an activity you already fetched
+
+Adding a stream, some photos, or anything else, does not need `--refresh`: the
+activity itself does not change just because you are asking Strava for more of
+it, so this only costs the one request for what you asked:
+
+```shell
+gatsby-source-strava-activity 4291234567 --streams heartrate
+```
+
+Combine it with `--refresh` to do both in the same run.
 
 ## Streams
 
@@ -58,8 +94,8 @@ being rounded to about a meter:
 | `latlng` stream        | 10000    | 10000     |
 
 `coordinates` is built from the stream when it is there, then from `polyline`,
-then from `summary_polyline`. Fetching the activity without `--streams` is
-enough to get its complete track.
+then from `summary_polyline`. `--refresh` alone is enough to get the complete
+track, without spending a request on a stream.
 
 Pick several of them, or take everything:
 

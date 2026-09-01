@@ -39,14 +39,13 @@ const getActivityZones = async ({activityId: id}) =>
     method: {category: "activities", name: "listZones"},
   })
 
-const getActivityStreams = ({activityId: id, streamsTypes: types}) =>
+const getActivityStreams = ({activityId: id, streamsTypes: keys}) =>
   strava.fetch({
     args: {
       id,
-      types,
+      keys,
       series_type: "time",
       resolution: "high",
-      key_by_type: true,
     },
     method: {category: "streams", name: "activity"},
     format: (payload) => {
@@ -80,8 +79,16 @@ const getCoordinates = ({activity, streams}) => {
 // Adds to an activity everything the options ask for. Shared by the source
 // plugin and the `gatsby-source-strava-activity` command, so that a refetched
 // activity has the very same shape as a sourced one.
+//
+// `existing`, only passed by the command, is the activity as it stood in the
+// store before this call. An option not requested this run falls back to
+// whatever `existing` already held, so running the command again with a
+// different set of options never drops what an earlier run added — streams
+// are merged type by type instead, so adding `heartrate` to an activity that
+// already has `latlng` keeps both.
 const buildActivity = async ({
   activity,
+  existing = null,
   options: {
     streamsTypes = [],
     withComments = false,
@@ -94,19 +101,34 @@ const buildActivity = async ({
 }) => {
   const activityId = activity.id
 
-  const comments = withComments ? await getActivityComments({activityId}) : null
-  const kudos = withKudos ? await getActivityKudos({activityId}) : null
-  const laps = withLaps ? await getActivityLaps({activityId}) : null
-  const photos = withPhotos ? await getActivityPhotos({activityId}) : null
-  const zones = withZones ? await getActivityZones({activityId}) : null
+  const comments = withComments
+    ? await getActivityComments({activityId})
+    : existing && existing.comments
+  const kudos = withKudos
+    ? await getActivityKudos({activityId})
+    : existing && existing.kudos
+  const laps = withLaps
+    ? await getActivityLaps({activityId})
+    : existing && existing.laps
+  const photos = withPhotos
+    ? await getActivityPhotos({activityId})
+    : existing && existing.photos
+  const zones = withZones
+    ? await getActivityZones({activityId})
+    : existing && existing.zones
 
   const fetchActivityStreams =
     (typeof withStreams === "function" && withStreams(activity)) ||
     withStreams === true
 
-  const streams =
+  const freshStreams =
     fetchActivityStreams && streamsTypes.length > 0
       ? await getActivityStreams({activityId, streamsTypes})
+      : null
+
+  const streams =
+    freshStreams || (existing && existing.streams)
+      ? {...(existing && existing.streams), ...freshStreams}
       : null
 
   const coordinates = getCoordinates({activity, streams})

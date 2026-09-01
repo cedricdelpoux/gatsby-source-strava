@@ -14,6 +14,9 @@ const usage = `Usage: gatsby-source-strava-activity <activityId> [options]
 Fetches one activity from Strava and replaces its file in the store, to pick up
 an activity edited on strava.com or to add details to it.
 
+Never drops what an earlier run already added: asking for one stream keeps the
+others, and skipping an option this time keeps what it fetched before.
+
 Options:
   --streams [types]  Add streams, comma separated, all of them when empty
   --comments         Add comments
@@ -21,7 +24,10 @@ Options:
   --laps             Add laps
   --photos           Add photos
   --zones            Add zones, needs a Strava subscription
-  --all              Every option above, every stream included
+  --refresh          Re-fetch the activity itself, to pick up an edit made on
+                      strava.com. Costs one request; skipped by default, and
+                      implied the first time an activity is fetched
+  --all              Every option above, --refresh included
   --dir <path>       Store directory, defaults to .strava
   --help             Show this message
 
@@ -56,6 +62,7 @@ const parseArgs = (argv) => {
   let activityId
   let storeDir = ".strava"
   let help = false
+  let refresh = false
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
@@ -81,6 +88,8 @@ const parseArgs = (argv) => {
 
     if (name === "help") {
       help = true
+    } else if (name === "refresh") {
+      refresh = true
     } else if (name === "dir") {
       storeDir = readValue() || storeDir
     } else if (name === "streams") {
@@ -88,6 +97,7 @@ const parseArgs = (argv) => {
       const types = readValue()
       options.streamsTypes = types ? types.split(",") : STREAMS_TYPES
     } else if (name === "all") {
+      refresh = true
       options.withStreams = true
       options.streamsTypes = STREAMS_TYPES
       WITH_OPTIONS.forEach((option) => {
@@ -104,11 +114,11 @@ const parseArgs = (argv) => {
     }
   }
 
-  return {activityId, help, options, storeDir}
+  return {activityId, help, options, refresh, storeDir}
 }
 
 const fetchActivity = async (argv) => {
-  const {activityId, help, options, storeDir} = parseArgs(argv)
+  const {activityId, help, options, refresh, storeDir} = parseArgs(argv)
 
   if (help || !activityId) {
     console.log(usage)
@@ -136,9 +146,23 @@ const fetchActivity = async (argv) => {
     token: STRAVA_TOKEN,
   })
 
-  const activity = await getActivityDetails({activityId})
-  const activityFull = await buildActivity({activity, options})
   const store = createStore({dir: path.resolve(storeDir)})
+  const existing = await store.readActivity(activityId)
+
+  // The first fetch of an activity always needs its details, whether or not
+  // `--refresh` was passed: there is nothing yet to add options onto
+  const fetchDetails = refresh || !existing
+
+  if (!fetchDetails && Object.keys(options).length === 0) {
+    throw new Error(
+      "Nothing to fetch: pass --refresh, or an option like --streams, --photos..."
+    )
+  }
+
+  const activity = fetchDetails
+    ? await getActivityDetails({activityId})
+    : existing
+  const activityFull = await buildActivity({activity, existing, options})
 
   await store.writeActivity(activityFull)
 
