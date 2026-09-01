@@ -67,9 +67,10 @@ activity edited after it was stored keeps the version it had when it was
 fetched, and an activity deleted on Strava stays in your site. Renaming a ride
 on strava.com, for instance, does not change anything on the next build.
 
-Deleting a single file does not bring the activity back: it is older than the
-cursor, so it is never asked for again. Delete the whole directory to fetch
-everything from scratch.
+Deleting a single file does not bring it back either: it is older than the
+cursor, so it is never asked for again. Use the
+[`gatsby-source-strava-activity`](./fetch-activity.md) command, which fetches one
+activity and replaces its file, or delete the whole directory to start over.
 
 ## Fetching only a part of the history
 

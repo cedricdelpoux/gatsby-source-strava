@@ -62,9 +62,12 @@ const getActivityStreams = ({activityId: id, streamsTypes: types}) =>
     },
   })
 
-// From the most precise source to the least: the latlng stream holds every
-// recorded point, `polyline` comes with a detailed activity, and
-// `summary_polyline` is the simplified track of a listed one.
+// The latlng stream holds the recorded points at full precision, but Strava
+// caps it at 10000, so `polyline`, the complete track of a detailed activity
+// encoded to about a meter, can be denser on a very long one. The stream still
+// comes first: it was asked for explicitly, and the difference only shows up
+// past 10000 points. `summary_polyline` is the simplified track of a listed
+// activity, the only one the plugin gets on its own.
 const getCoordinates = ({activity, streams}) => {
   const latlngStream = streams && streams.latlng
   const activityMap = activity.map || {}

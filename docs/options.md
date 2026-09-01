@@ -44,7 +44,7 @@ module.exports = {
 }
 ```
 
-Read the [Store](./cache.md) documentation.
+Read the [Store](./store.md) documentation.
 
 ## Activities
 

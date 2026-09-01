@@ -65,9 +65,40 @@ module.exports = {
 That's it!
 
 > For advanced configuration, please read [options](./docs/options.md) documentation.
->
-> Builds after the first one only fetch new activities, read the
-> [cache](./docs/cache.md) documentation.
+
+## Data
+
+The plugin creates a `StravaAthlete` node and one `StravaActivity` node per
+activity, with a `coordinates` field ready for a map. Their GraphQL types are
+declared by the plugin, so your queries work even before the first activity is
+fetched.
+
+## Store
+
+Your history is fetched once and kept in a `.strava` directory next to your
+`gatsby-config.js`, not in the Gatsby cache. A build only fetches the activities
+you recorded since the previous one, even after a `gatsby clean` or on a fresh
+continuous integration checkout.
+
+> Strava allows 100 requests every 15 minutes and 1000 a day. Read the
+> [rate limits](./docs/rate-limits.md) documentation before enabling options
+> that fetch more of every activity.
+
+## Commands
+
+| Command                              | What it does                                             |
+| ------------------------------------ | -------------------------------------------------------- |
+| `gatsby-source-strava-token`         | Generates the token the plugin needs                     |
+| `gatsby-source-strava-activity <id>` | Fetches one activity again, with as much detail as asked |
+
+## Documentation
+
+-   [Options](./docs/options.md), everything you can configure
+-   [Store](./docs/store.md), where your activities live and when they are fetched
+-   [Rate limits](./docs/rate-limits.md), what Strava allows and how to handle it
+-   [Token](./docs/token.md), generating and refreshing it
+-   [Fetching an activity again](./docs/fetch-activity.md), to add details or pick up an edit
+-   [Creating pages](./docs/create-pages.md), one page per activity
 
 ## Contributing
 

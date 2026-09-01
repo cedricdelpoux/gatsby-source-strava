@@ -1,45 +1,11 @@
 #! /usr/bin/env node
 
 const express = require("express")
-const fs = require("fs")
-const glob = require("glob")
 const inquirer = require("inquirer")
 const open = require("open")
 const strava = require("strava-v3")
 
-const getEnvFiles = () => {
-  const envFiles = glob.sync(".env*")
-
-  return envFiles.length > 0 ? envFiles : [".env"]
-}
-
-const setEnvVariable = (content, name, value) => {
-  const line = `${name}=${value}`
-  const lines = content ? content.replace(/\n+$/, "").split("\n") : []
-  const isVariable = (existing) => existing.startsWith(`${name}=`)
-  const index = lines.findIndex(isVariable)
-  const others = lines.filter((existing) => !isVariable(existing))
-
-  if (index === -1) {
-    others.push(line)
-  } else {
-    others.splice(index, 0, line)
-  }
-
-  return others.join("\n") + "\n"
-}
-
-const writeToEnvFiles = (name, value) => {
-  try {
-    getEnvFiles().forEach((file) => {
-      const content = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : ""
-
-      fs.writeFileSync(file, setEnvVariable(content, name, value))
-    })
-  } catch (e) {
-    throw new Error(e)
-  }
-}
+const {writeToEnvFiles} = require("./env.js")
 
 // Waits for Strava to call back with an authorization code. The port is picked
 // by the system: a hardcoded one fails as soon as something else listens on it,
@@ -143,9 +109,4 @@ if (require.main === module) {
   generateToken()
 }
 
-module.exports = {
-  generateToken,
-  setEnvVariable,
-  startCallbackServer,
-  writeToEnvFiles,
-}
+module.exports = {generateToken, startCallbackServer}

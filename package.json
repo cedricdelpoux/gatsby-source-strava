@@ -46,6 +46,7 @@
     "prepublishOnly": "yarn lint"
   },
   "bin": {
+    "gatsby-source-strava-activity": "utils/fetch-activity.js",
     "gatsby-source-strava-token": "utils/generate-token.js"
   },
   "lint-staged": {

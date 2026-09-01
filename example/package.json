@@ -6,7 +6,8 @@
     "clean": "gatsby clean",
     "dev": "gatsby develop",
     "serve": "gatsby serve",
-    "token": "../utils/generate-token.js"
+    "token": "../utils/generate-token.js",
+    "fetch-activity": "../utils/fetch-activity.js --streams latlng"
   },
   "dependencies": {
     "@mapbox/polyline": "^1.2.1",
