@@ -65,6 +65,9 @@ module.exports = {
 That's it!
 
 > For advanced configuration, please read [options](./docs/options.md) documentation.
+>
+> Builds after the first one only fetch new activities, read the
+> [cache](./docs/cache.md) documentation.
 
 ## Contributing
 

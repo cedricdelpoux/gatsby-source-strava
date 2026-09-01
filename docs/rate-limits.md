@@ -47,7 +47,7 @@ lasts 15 minutes at worst and around 7 on average.
 
 Build time can be very long if you fetch all your history with thousand of
 activities. It will only be long the first fetch because this plugin caches
-data.
+data. See the [Cache](./cache.md) documentation.
 
 ## Long Rate Limit
 
