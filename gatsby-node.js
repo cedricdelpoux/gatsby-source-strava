@@ -1,6 +1,9 @@
+const path = require("path")
+
 const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
 const {fetchWithRateLimit} = require("./utils/rate-limit.js")
+const {createStore} = require("./utils/store.js")
 const {strava} = require("./utils/strava.js")
 const {types} = require("./utils/types.js")
 
@@ -9,7 +12,7 @@ exports.createSchemaCustomization = ({actions}) => {
 }
 
 exports.sourceNodes = async (
-  {actions, createContentDigest, reporter, cache},
+  {actions, createContentDigest, reporter, cache, store},
   pluginOptions = {}
 ) => {
   if (!pluginOptions.stravaClientId) {
@@ -39,12 +42,19 @@ exports.sourceNodes = async (
       waitOnRateLimit: pluginOptions.waitOnRateLimit,
     }
 
+    // Kept out of the Gatsby cache, which Gatsby empties on its own
+    const {directory} = store.getState().program
+    const stravaStore = createStore({
+      dir: path.resolve(directory, pluginOptions.storeDir || ".strava"),
+    })
+
     const activities = await getActivities({
       debug: pluginOptions.debug,
       options: pluginOptions.activities,
       rateLimit,
       cache,
       reporter,
+      store: stravaStore,
     })
 
     if (activities && activities.length > 0) {

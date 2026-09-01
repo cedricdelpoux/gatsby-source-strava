@@ -1,4 +1,5 @@
 .env
 .cache
+.strava
 node_modules
 public

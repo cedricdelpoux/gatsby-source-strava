@@ -1,8 +1,33 @@
-const polyline = require("@mapbox/polyline")
-
+const {buildActivity} = require("./activity.js")
 const {handleRateLimit, isRateLimitError} = require("./rate-limit.js")
 const {strava} = require("./strava.js")
 const {to10DigitTimestamp} = require("./timestamp.js")
+
+// Activities were stored in the Gatsby cache until 3.1.0. They are moved to
+// the store on the first build, so that an existing history is not fetched
+// again, and the Gatsby cache is never written to afterwards.
+const restoreFromGatsbyCache = async ({cache, store}) => {
+  const cachedActivitiesIds = (await cache.get("activities")) || []
+  const activities = []
+
+  for (const activityId of cachedActivitiesIds) {
+    const activity = await cache.get(`${activityId}`)
+
+    if (activity) {
+      await store.writeActivity(activity)
+
+      activities.push(activity)
+    }
+  }
+
+  const lastFetch = await cache.get("last-fetch")
+
+  if (activities.length > 0 && lastFetch) {
+    await store.writeState({lastFetch})
+  }
+
+  return activities
+}
 
 const getActivities = async ({
   cache,
@@ -10,6 +35,7 @@ const getActivities = async ({
   options = {},
   rateLimit,
   reporter,
+  store,
 }) => {
   let page = 1
   let hasNextPage
@@ -17,26 +43,33 @@ const getActivities = async ({
   let isTruncated = false
   let after = options.after
   const activities = {}
-  const cachedActivitiesIds = (await cache.get("activities")) || []
   const fetchDate = Date.now()
 
-  for (const activityId of cachedActivitiesIds) {
-    const activity = await cache.get(`${activityId}`)
+  let stored = await store.readActivities()
 
-    if (activity) {
-      activities[activityId] = activity
+  if (stored.length === 0) {
+    stored = await restoreFromGatsbyCache({cache, store})
+
+    if (stored.length > 0) {
+      reporter.info(
+        `source-strava: ${stored.length} activities moved to ${store.dir}`
+      )
     }
   }
 
-  const restoredCount = Object.keys(activities).length
+  stored.forEach((activity) => {
+    activities[activity.id] = activity
+  })
+
+  const restoredCount = stored.length
 
   if (restoredCount > 0 && debug) {
     reporter.success(
-      `source-strava: ${restoredCount} activities restored from cache`
+      `source-strava: ${restoredCount} activities restored from ${store.dir}`
     )
   }
 
-  const lastFetch = await cache.get("last-fetch")
+  const {lastFetch} = await store.readState()
 
   if (!after && restoredCount > 0 && lastFetch) {
     after = to10DigitTimestamp(lastFetch)
@@ -65,10 +98,9 @@ const getActivities = async ({
       if (activitiesPageFull.length > 0) {
         for (const activityFull of activitiesPageFull) {
           activities[activityFull.id] = activityFull
-          await cache.set(`${activityFull.id}`, activityFull)
-        }
 
-        await cache.set("activities", Object.keys(activities))
+          await store.writeActivity(activityFull)
+        }
 
         hasNextPage = true
         page++
@@ -92,98 +124,26 @@ const getActivities = async ({
     }
   } while (hasNextPage || mustRetry)
 
+  // `lastFetch` means "everything older is stored", so it is only written once
+  // the whole history has been walked through: without an `after` option Strava
+  // returns the newest activities first, and moving the cursor after a
+  // truncated fetch would leave the older ones behind for good
   if (!isTruncated) {
-    await cache.set("last-fetch", fetchDate)
+    await store.writeState({lastFetch: fetchDate})
   }
 
   return Object.values(activities)
 }
 
-const getActivitiesPageFull = async ({
-  options: {
-    streamsTypes = [],
-    withComments = false,
-    withKudos = false,
-    withLaps = false,
-    withPhotos = false,
-    withStreams = false,
-    withZones = false,
-    ...options
-  },
-  page,
-}) => {
-  const activitiesPage = await getActivitiesPage({
-    ...options,
-    page,
-  })
+const getActivitiesPageFull = async ({options, page}) => {
+  const activitiesPage = await getActivitiesPage({...options, page})
 
   if (!activitiesPage || activitiesPage.length === 0) {
     return []
   }
 
   return Promise.all(
-    activitiesPage.map(async (activity) => {
-      const comments = withComments
-        ? await getActivityComments({
-            activityId: activity.id,
-          })
-        : null
-
-      const kudos = withKudos
-        ? await getActivityKudos({
-            activityId: activity.id,
-          })
-        : null
-
-      const laps = withLaps
-        ? await getActivityLaps({
-            activityId: activity.id,
-          })
-        : null
-
-      const photos = withPhotos
-        ? await getActivityPhotos({
-            activityId: activity.id,
-          })
-        : null
-
-      const fetchActivityStreams =
-        (typeof withStreams === "function" && withStreams(activity)) ||
-        withStreams === true
-
-      const streams =
-        fetchActivityStreams && streamsTypes.length > 0
-          ? await getActivityStreams({
-              activityId: activity.id,
-              streamsTypes,
-            })
-          : null
-
-      const zones = withZones
-        ? await getActivityZones({
-            activityId: activity.id,
-          })
-        : null
-
-      const latlngStream = streams && streams.latlng
-      const mapPolyline = activity.map && activity.map.summary_polyline
-      const points =
-        latlngStream || (mapPolyline ? polyline.decode(mapPolyline) : [])
-      const coordinates = points.map(([lat, lng]) => [lng, lat]) // x,y
-
-      const activityFull = {
-        ...activity,
-        ...(coordinates.length > 0 && {coordinates}),
-        ...(comments && {comments}),
-        ...(kudos && {kudos}),
-        ...(laps && {laps}),
-        ...(photos && {photos}),
-        ...(streams && {streams}),
-        ...(zones && {zones}),
-      }
-
-      return activityFull
-    })
+    activitiesPage.map((activity) => buildActivity({activity, options}))
   )
 }
 
@@ -201,59 +161,6 @@ const getActivitiesPage = async ({
       per_page: perPage,
     },
     method: {category: "athlete", name: "listActivities"},
-  })
-
-const getActivityLaps = async ({activityId: id}) =>
-  strava.fetch({
-    args: {id},
-    method: {category: "activities", name: "listLaps"},
-  })
-
-const getActivityComments = async ({activityId: id}) =>
-  strava.fetch({
-    args: {id},
-    method: {category: "activities", name: "listComments"},
-  })
-
-const getActivityKudos = async ({activityId: id}) =>
-  strava.fetch({
-    args: {id},
-    method: {category: "activities", name: "listKudos"},
-  })
-
-const getActivityPhotos = async ({activityId: id}) =>
-  strava.fetch({
-    args: {},
-    method: {path: `activities/${id}/photos`},
-  })
-
-const getActivityStreams = ({activityId: id, streamsTypes: types}) =>
-  strava.fetch({
-    args: {
-      id,
-      types,
-      series_type: "time",
-      resolution: "high",
-      key_by_type: true,
-    },
-    method: {category: "streams", name: "activity"},
-    format: (payload) => {
-      const streams = {}
-
-      if (payload && payload.length > 0) {
-        payload.forEach(({type, data}) => {
-          streams[type] = data
-        })
-      }
-
-      return streams
-    },
-  })
-
-const getActivityZones = async ({activityId: id}) =>
-  strava.fetch({
-    args: {id},
-    method: {category: "activities", name: "listZones"},
   })
 
 module.exports = getActivities

@@ -25,6 +25,27 @@ With the default configuration, `gatsby-source-strava` fetch [Athlete][strava-at
 >
 > Read [Rate Limits](./rate-limits.md) documentation.
 
+## Store
+
+Activities are kept in a `.strava` directory next to your `gatsby-config.js`,
+so that they are fetched once and not on every build. Use `storeDir` to put
+them somewhere else:
+
+```js
+module.exports = {
+    plugins: [
+        {
+            resolve: "gatsby-source-strava",
+            options: {
+                storeDir: ".strava",
+            },
+        },
+    ],
+}
+```
+
+Read the [Store](./cache.md) documentation.
+
 ## Activities
 
 To add data to activities objects, try the following options:
@@ -79,10 +100,6 @@ module.exports = {
                     // Timestamp for filtering activities that have taken place BEFORE a certain time
                     before: "1539500400",
                     // Timestamp for filtering activities that have taken place AFTER a certain time
-                    //  ⚠️ Keep `after` a fixed timestamp. Computing it when the config is loaded,
-                    // `new Date(...)` for instance, gives it a new value every day. Gatsby deletes
-                    // its whole cache as soon as plugin options change, so your history would be
-                    // fetched again from scratch, daily.
                     after: "1539500400",
                     //
                     // Add custom data
