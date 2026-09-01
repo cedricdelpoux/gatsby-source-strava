@@ -7,16 +7,34 @@ const inquirer = require("inquirer")
 const open = require("open")
 const strava = require("strava-v3")
 
-const envFiles = glob.sync(".env*")
+const getEnvFiles = () => {
+  const envFiles = glob.sync(".env*")
 
-if (envFiles.length === 0) {
-  envFiles.push(".env")
+  return envFiles.length > 0 ? envFiles : [".env"]
+}
+
+const setEnvVariable = (content, name, value) => {
+  const line = `${name}=${value}`
+  const lines = content ? content.replace(/\n+$/, "").split("\n") : []
+  const isVariable = (existing) => existing.startsWith(`${name}=`)
+  const index = lines.findIndex(isVariable)
+  const others = lines.filter((existing) => !isVariable(existing))
+
+  if (index === -1) {
+    others.push(line)
+  } else {
+    others.splice(index, 0, line)
+  }
+
+  return others.join("\n") + "\n"
 }
 
 const writeToEnvFiles = (name, value) => {
   try {
-    envFiles.forEach((file) => {
-      fs.appendFileSync(file, `${name}=${value}\n`)
+    getEnvFiles().forEach((file) => {
+      const content = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : ""
+
+      fs.writeFileSync(file, setEnvVariable(content, name, value))
     })
   } catch (e) {
     throw new Error(e)
@@ -125,4 +143,9 @@ if (require.main === module) {
   generateToken()
 }
 
-module.exports = {generateToken, startCallbackServer}
+module.exports = {
+  generateToken,
+  setEnvVariable,
+  startCallbackServer,
+  writeToEnvFiles,
+}
