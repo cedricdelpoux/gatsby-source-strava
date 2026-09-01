@@ -95,17 +95,17 @@ continuous integration checkout.
 
 ## Documentation
 
--   [Options](./docs/options.md), everything you can configure
--   [Store](./docs/store.md), where your activities live and when they are fetched
--   [Rate limits](./docs/rate-limits.md), what Strava allows and how to handle it
--   [Token](./docs/token.md), generating and refreshing it
--   [Fetching an activity again](./docs/fetch-activity.md), to add details or pick up an edit
--   [Creating pages](./docs/create-pages.md), one page per activity
+- [Options](./docs/options.md), everything you can configure
+- [Store](./docs/store.md), where your activities live and when they are fetched
+- [Rate limits](./docs/rate-limits.md), what Strava allows and how to handle it
+- [Token](./docs/token.md), generating and refreshing it
+- [Fetching an activity again](./docs/fetch-activity.md), to add details or pick up an edit
+- [Creating pages](./docs/create-pages.md), one page per activity
 
 ## Contributing
 
--   ⇄ Pull/Merge requests and ★ Stars are always welcome.
--   For bugs and feature requests, please [create an issue][github-issue].
+- ⇄ Pull/Merge requests and ★ Stars are always welcome.
+- For bugs and feature requests, please [create an issue][github-issue].
 
 ## Changelog
 
