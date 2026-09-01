@@ -5,6 +5,15 @@
 - Changed: requires Node 20 or later, `strava-v3` moved to that requirement in
   its own 3.x series
 
+## Features
+
+- feat: `gatsby-source-strava-activity` no longer re-fetches an activity
+  already in the store just to add a stream or a detail to it, saving a
+  request; pass `--refresh` to also pick up an edit made on strava.com
+- feat: running `gatsby-source-strava-activity` again never drops what an
+  earlier run added — an option not passed this time falls back to what is
+  already stored, and streams are merged type by type instead of replaced
+
 ## Fixes
 
 - fix: turn json-bigint decimals back into numbers, some GraphQL fields
@@ -13,6 +22,10 @@
   changes from one node to the next
 - fix: read Strava's error message from `error.data`, `strava-v3` no longer
   attaches it to `error.error` now that it dropped `request-promise`
+- fix: streams came back empty, both with the `withStreams` plugin option and
+  with `gatsby-source-strava-activity` — `strava-v3` only forwards a `keys`
+  argument to the endpoint, not the `types` this plugin sent, and
+  `key_by_type` changes the response into a shape this plugin never parsed
 - fix: remove the stale `.lintstagedrc`, present since the very first commit
   and silently taking over the `lint-staged` key of `package.json` — ESLint
   never actually ran in the pre-commit hook, only Prettier did
