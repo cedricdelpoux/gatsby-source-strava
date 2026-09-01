@@ -13,6 +13,9 @@
   changes from one node to the next
 - fix: read Strava's error message from `error.data`, `strava-v3` no longer
   attaches it to `error.error` now that it dropped `request-promise`
+- fix: remove the stale `.lintstagedrc`, present since the very first commit
+  and silently taking over the `lint-staged` key of `package.json` — ESLint
+  never actually ran in the pre-commit hook, only Prettier did
 
 ## Dependencies
 
@@ -21,8 +24,10 @@
 - chore: update `express` to 5 and `glob` to 13, both still `require()`-able and
   a drop-in for what this plugin uses from them
 - chore: update `prettier` to 3, dev only, only reformats the docs
-- chore: update eslint, eslint-config-prettier, inquirer, lint-staged and open
-  within their current major versions
+- chore: update `eslint` to 9 and `eslint-config-prettier` to 10, migrating to
+  ESLint's flat config and merging the `example/` one into it; update `husky`
+  to 9 and `lint-staged` to 16, both restructured, dev only
+- chore: update inquirer and open within their current major versions
 
 # 3.1.0
 

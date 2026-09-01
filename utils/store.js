@@ -24,7 +24,7 @@ const createStore = ({dir}) => {
 
     try {
       return JSON.parse(content)
-    } catch (e) {
+    } catch {
       throw new Error(`${file} is not valid JSON, delete it to fetch it again`)
     }
   }
