@@ -16,6 +16,9 @@
     "strava"
   ],
   "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "files": [
     "gatsby-node.js",
     "utils",
@@ -27,7 +30,7 @@
     "glob": "^7.2.0",
     "inquirer": "^8.2.0",
     "open": "^8.4.0",
-    "strava-v3": "^2.2.1"
+    "strava-v3": "^4.0.1"
   },
   "devDependencies": {
     "eslint": "^8.2.0",

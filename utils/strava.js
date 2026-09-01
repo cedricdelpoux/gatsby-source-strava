@@ -37,6 +37,35 @@ const parseRateLimits = (headers = {}) => {
   return Object.values(limits).some(Number.isNaN) ? null : limits
 }
 
+// `strava-v3` parses responses with `json-bigint`, which turns any number of
+// about sixteen digits or more into a BigNumber object, later serialized as a
+// string. A coordinate or an average then reaches Gatsby as a string on some
+// activities and as a number on others, and Gatsby drops the fields whose type
+// changes from one node to the next.
+//
+// Those decimals are measurements, converting them back costs a rounding way
+// below what a GPS records. Integers of that size are ids, and turning them
+// into a double would change their last digits, so they stay strings.
+const toNumbers = (value) => {
+  if (Array.isArray(value)) return value.map(toNumbers)
+
+  if (value && typeof value === "object") {
+    if (value._isBigNumber === true) {
+      return value.isInteger() ? value.toString() : Number(value.toString())
+    }
+
+    const plain = {}
+
+    Object.keys(value).forEach((key) => {
+      plain[key] = toNumbers(value[key])
+    })
+
+    return plain
+  }
+
+  return value
+}
+
 class Strava {
   constructor() {
     this.token = null
@@ -121,7 +150,9 @@ class Strava {
         : stravaApi[method.category][method.name](params)
 
       request
-        .then((payload) => {
+        .then((response) => {
+          const payload = toNumbers(response)
+
           if (format) {
             return resolve(format(payload))
           } else {
@@ -150,7 +181,7 @@ class Strava {
             this.handleError({
               category,
               method: name,
-              error: (error.error && error.error.message) || error.message,
+              error: (error.data && error.data.message) || error.message,
             })
           )
         })

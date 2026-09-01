@@ -17,6 +17,8 @@
 
 Gatsby plugin to use Strava as a data source
 
+> Requires Node 20 or later.
+
 ## Usage
 
 1. Download `gatsby-source-strava` from the NPM registry:

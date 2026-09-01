@@ -1,3 +1,26 @@
+# 3.2.0
+
+## Breaking changes
+
+-   Changed: requires Node 20 or later, `strava-v3` moved to that requirement in
+    its own 3.x series
+
+## Fixes
+
+-   fix: turn json-bigint decimals back into numbers, some GraphQL fields
+    (`start_latlng`, `average_heartrate`...) came back as a string on some
+    activities and a number on others, and Gatsby drops a field whose type
+    changes from one node to the next
+-   fix: read Strava's error message from `error.data`, `strava-v3` no longer
+    attaches it to `error.error` now that it dropped `request-promise`
+
+## Dependencies
+
+-   chore: update `strava-v3` to 4.0.1, which replaces `request` and
+    `request-promise`, both deprecated, with axios
+-   chore: update eslint, eslint-config-prettier, express, glob, inquirer,
+    lint-staged and open within their current major versions
+
 # 3.1.0
 
 ## Features
