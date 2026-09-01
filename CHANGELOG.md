@@ -1,3 +1,24 @@
+# 3.1.0
+
+## Features
+
+-   feat: keep activities in a `.strava` store instead of the Gatsby cache
+-   feat: add the `gatsby-source-strava-activity` command, which fetches one
+    activity again and replaces its file
+-   feat: use the complete track of a refetched activity, which comes with the
+    detailed activity at no extra request, instead of the simplified one
+
+## Fixes
+
+-   fix: replace env variables instead of appending duplicates, so that
+    generating a token again refreshes it rather than stacking an outdated one
+
+## Documentation
+
+-   docs: document the store, its incremental fetch and its limitations
+-   docs: document the `gatsby-source-strava-activity` command
+-   docs: add the data, store, commands and documentation sections to the readme
+
 # 3.0.0
 
 ## Breaking changes
