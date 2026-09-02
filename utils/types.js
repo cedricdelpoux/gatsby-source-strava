@@ -10,29 +10,52 @@
 // Inference is still active, so extra fields added through the `extend`
 // options keep working.
 //
-// Numeric ids are declared as `Float` on purpose: Strava ids overflow the
-// 32 bit range of the GraphQL `Int` type.
+// Every id is a `String`: an id is an identifier, never a quantity, and no
+// number type here holds one safely. `Int` is 32 bit, which an activity id
+// passed long ago; `Float` holds integers exactly only up to 2^53, which a
+// segment effort id, at 19 digits, is already past. `normalize.js` is what
+// turns them into strings on their way into a node, and drops the `id_str`
+// twins Strava sends for that same reason.
 
 const types = `
-  type StravaActivityAthlete {
-    id: Float
-    id_str: String
-    resource_state: Int
-  }
 
-  type StravaActivityMap {
-    id: String
-    polyline: String
-    summary_polyline: String
+  type StravaAthlete implements Node {
+    id: ID!
+    username: String
+    firstname: String
+    lastname: String
+    bio: String
+    city: String
+    state: String
+    country: String
+    sex: String
+    premium: Boolean
+    summit: Boolean
+    created_at: Date @dateformat
+    updated_at: Date @dateformat
+    badge_type_id: Int
+    weight: Float
+    ftp: Float
+    profile: String
+    profile_medium: String
+    friend: String
+    follower: String
+    blocked: Boolean
+    can_follow: Boolean
+    follower_count: Int
+    friend_count: Int
+    mutual_friend_count: Int
+    athlete_type: Int
+    date_preference: String
+    measurement_preference: String
+    postable_clubs_count: Int
     resource_state: Int
   }
 
   type StravaActivity implements Node {
     id: ID!
-    id_str: String
     external_id: String
-    upload_id: Float
-    upload_id_str: String
+    upload_id: String
     athlete: StravaActivityAthlete
     name: String
     distance: Float
@@ -90,37 +113,15 @@ const types = `
     resource_state: Int
   }
 
-  type StravaAthlete implements Node {
-    id: ID!
-    id_str: String
-    username: String
-    firstname: String
-    lastname: String
-    bio: String
-    city: String
-    state: String
-    country: String
-    sex: String
-    premium: Boolean
-    summit: Boolean
-    created_at: Date @dateformat
-    updated_at: Date @dateformat
-    badge_type_id: Int
-    weight: Float
-    ftp: Float
-    profile: String
-    profile_medium: String
-    friend: String
-    follower: String
-    blocked: Boolean
-    can_follow: Boolean
-    follower_count: Int
-    friend_count: Int
-    mutual_friend_count: Int
-    athlete_type: Int
-    date_preference: String
-    measurement_preference: String
-    postable_clubs_count: Int
+  type StravaActivityAthlete {
+    id: String
+    resource_state: Int
+  }
+
+  type StravaActivityMap {
+    id: String
+    polyline: String
+    summary_polyline: String
     resource_state: Int
   }
 `

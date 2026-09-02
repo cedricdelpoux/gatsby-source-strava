@@ -2,7 +2,7 @@ const path = require("path")
 
 const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
-const {normalizeActivity} = require("./utils/normalize.js")
+const {normalizeActivity, normalizeIds} = require("./utils/normalize.js")
 const {fetchWithRateLimit} = require("./utils/rate-limit.js")
 const {createStore} = require("./utils/store.js")
 const {strava} = require("./utils/strava.js")
@@ -104,16 +104,23 @@ exports.sourceNodes = async (
       return
     }
 
+    const normalizedAthlete = normalizeIds(athlete)
+
     if (pluginOptions.athlete && pluginOptions.athlete.extend) {
-      pluginOptions.athlete.extend({activities, athlete})
+      // The activities are normalized here rather than upfront, so that a
+      // site not using this option pays nothing for it
+      pluginOptions.athlete.extend({
+        activities: activities ? activities.map(normalizeActivity) : activities,
+        athlete: normalizedAthlete,
+      })
     }
 
     actions.createNode({
-      ...athlete,
-      id: athlete.id.toString(),
+      ...normalizedAthlete,
+      id: normalizedAthlete.id.toString(),
       internal: {
         type: "StravaAthlete",
-        contentDigest: createContentDigest(athlete),
+        contentDigest: createContentDigest(normalizedAthlete),
       },
     })
 
