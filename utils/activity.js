@@ -39,10 +39,15 @@ const getActivityComments = async ({activityId: id}) =>
     method: {category: "activities", name: "listComments"},
   })
 
+// Strava answers 30 kudoers a page unasked, which a well liked activity
+// passes without saying so — the ones beyond simply never arrive. 200 is the
+// most it allows on a page, and costs the same single request.
+const KUDOS_PER_PAGE = 200
+
 const getActivityKudos = async ({activityId: id}) =>
   strava.fetch({
-    args: {id},
-    method: {category: "activities", name: "listKudos"},
+    args: {id, per_page: KUDOS_PER_PAGE},
+    method: {category: "activities", name: "listKudoers"},
   })
 
 // Asked for no size, Strava answers with a placeholder image rather than the
