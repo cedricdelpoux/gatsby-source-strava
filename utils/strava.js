@@ -1,5 +1,19 @@
 const stravaApi = require("strava-v3")
 
+// `strava-v3` hardcodes a 10s axios timeout, with no way to change it through
+// its public API. A single page of 200 activities alone measured over 7s on a
+// large history, leaving too little margin, and this is the only lever: its
+// internal axios instance, not part of the package's public API, so this is
+// wrapped in case a future version moves or renames it.
+const AXIOS_TIMEOUT_MS = 30000
+
+try {
+  require("strava-v3/axiosUtility").axiosInstance.defaults.timeout =
+    AXIOS_TIMEOUT_MS
+} catch {
+  // Falls back to strava-v3's own 10s default
+}
+
 class StravaError extends Error {
   constructor(code, category, method, ...args) {
     super(...args)
@@ -36,6 +50,22 @@ const parseRateLimits = (headers = {}) => {
 
   return Object.values(limits).some(Number.isNaN) ? null : limits
 }
+
+// `strava-v3` only preserves the message of a network-level failure, not
+// axios' own error code, so a genuine timeout or connection drop is told
+// apart from a request that never left (bad url, bad config, ...) by this
+// prefix alone. Only the former is worth retrying, the latter fails the same
+// way every time.
+const isTransientNetworkError = (error) =>
+  error.name === "RequestError" &&
+  error.message.startsWith("No response received")
+
+// A short, capped backoff: Strava or the network blipping is common enough
+// to be worth a couple of quick retries, not so unreliable that it needs more
+const NETWORK_RETRY_DELAYS = [1000, 3000]
+
+const sleep = (duration) =>
+  new Promise((resolve) => setTimeout(resolve, duration))
 
 // `strava-v3` parses responses with `json-bigint`, which turns any number of
 // about sixteen digits or more into a BigNumber object, later serialized as a
@@ -137,55 +167,63 @@ class Strava {
   }
 
   async fetch({args, method, format}) {
-    return new Promise((resolve, reject) => {
-      const {access_token} = this.token
-      const params = {...args, access_token}
-      const category = method.category || "endpoint"
-      const name = method.name || method.path
+    const {access_token} = this.token
+    const params = {...args, access_token}
+    const category = method.category || "endpoint"
+    const name = method.name || method.path
 
-      // `strava-v3` has no method for a few endpoints, which are called by
-      // path through the http client every other method already uses
-      const request = method.path
-        ? stravaApi.activities.client.getEndpoint(method.path, params)
-        : stravaApi[method.category][method.name](params)
+    for (let attempt = 0; ; attempt++) {
+      try {
+        // `strava-v3` has no method for a few endpoints, which are called by
+        // path through the http client every other method already uses
+        const response = method.path
+          ? await stravaApi.activities.client.getEndpoint(method.path, params)
+          : await stravaApi[method.category][method.name](params)
 
-      request
-        .then((response) => {
-          const payload = toNumbers(response)
+        const payload = toNumbers(response)
 
-          if (format) {
-            return resolve(format(payload))
-          } else {
-            return resolve(payload)
-          }
-        })
-        .catch((error) => {
-          // Not an HTTP error: a network failure, a timeout... Rejecting is
-          // what stops the build, letting it through would hang it forever.
-          if (error.name !== "StatusCodeError") {
-            return reject(error)
-          }
+        return format ? format(payload) : payload
+      } catch (error) {
+        if (
+          isTransientNetworkError(error) &&
+          attempt < NETWORK_RETRY_DELAYS.length
+        ) {
+          await sleep(NETWORK_RETRY_DELAYS[attempt])
 
-          // Too Many Requests
-          if (error.statusCode === 429) {
-            return reject(
-              this.handleTooManyRequests({
-                category,
-                method: name,
-                headers: error.response && error.response.headers,
-              })
-            )
-          }
+          continue
+        }
 
-          return reject(
-            this.handleError({
-              category,
-              method: name,
-              error: (error.data && error.data.message) || error.message,
-            })
+        // Not an HTTP error, and not one worth retrying: a bad request, or a
+        // network failure that outlasted the retries above. Throwing is what
+        // stops the build, letting it through would hang it forever. `error`
+        // alone never says which of the many calls a build makes failed —
+        // `getAthlete` for instance is up to five of them depending on
+        // options — so it is wrapped with that context here too.
+        if (error.name !== "StatusCodeError") {
+          throw new StravaError(
+            "network",
+            category,
+            name,
+            `[${category}.${name}] ${error.message}`
           )
+        }
+
+        // Too Many Requests
+        if (error.statusCode === 429) {
+          throw this.handleTooManyRequests({
+            category,
+            method: name,
+            headers: error.response && error.response.headers,
+          })
+        }
+
+        throw this.handleError({
+          category,
+          method: name,
+          error: (error.data && error.data.message) || error.message,
         })
-    })
+      }
+    }
   }
 }
 
