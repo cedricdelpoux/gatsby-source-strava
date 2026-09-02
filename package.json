@@ -26,6 +26,7 @@
   ],
   "dependencies": {
     "@mapbox/polyline": "^1.2.1",
+    "chokidar": "^3.5.3",
     "express": "^5.2.1",
     "glob": "^13.0.6",
     "inquirer": "^8.2.0",

@@ -72,6 +72,14 @@ cursor, so it is never asked for again. Use the
 [`gatsby-source-strava-activity`](./fetch-activity.md) command, which fetches one
 activity and replaces its file, or delete the whole directory to start over.
 
+## Watching for changes in `gatsby develop`
+
+While `gatsby develop` is running, the plugin watches `activities/` for
+changes made outside of it — typically `gatsby-source-strava-activity`
+refetching one activity in another terminal. On any change, it replays every
+activity from the store: cheap, since it only reads local files, no Strava
+request. Nothing to configure, and it never runs during `gatsby build`.
+
 ## Fetching only a part of the history
 
 The `after` and `before` options take over the cursor, so a site configured

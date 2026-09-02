@@ -6,13 +6,14 @@ const {fetchWithRateLimit} = require("./utils/rate-limit.js")
 const {createStore} = require("./utils/store.js")
 const {strava} = require("./utils/strava.js")
 const {types} = require("./utils/types.js")
+const {watchStore} = require("./utils/watch.js")
 
 exports.createSchemaCustomization = ({actions}) => {
   actions.createTypes(types)
 }
 
 exports.sourceNodes = async (
-  {actions, createContentDigest, reporter, cache, store},
+  {actions, createContentDigest, reporter, cache, store, getNode},
   pluginOptions = {}
 ) => {
   if (!pluginOptions.stravaClientId) {
@@ -44,11 +45,28 @@ exports.sourceNodes = async (
 
     // Kept out of the Gatsby cache, which Gatsby empties on its own
     const {directory} = store.getState().program
-    const stravaStore = createStore({
-      dir: path.resolve(directory, pluginOptions.storeDir || ".strava"),
-    })
+    const storeDir = path.resolve(
+      directory,
+      pluginOptions.storeDir || ".strava"
+    )
+    const stravaStore = createStore({dir: storeDir})
 
-    const activities = await getActivities({
+    const createActivityNode = (activity) => {
+      if (pluginOptions.activities && pluginOptions.activities.extend) {
+        pluginOptions.activities.extend({activity})
+      }
+
+      actions.createNode({
+        ...activity,
+        id: activity.id.toString(),
+        internal: {
+          type: "StravaActivity",
+          contentDigest: createContentDigest(activity),
+        },
+      })
+    }
+
+    const {activities, fetchedCount} = await getActivities({
       debug: pluginOptions.debug,
       options: pluginOptions.activities,
       rateLimit,
@@ -58,22 +76,15 @@ exports.sourceNodes = async (
     })
 
     if (activities && activities.length > 0) {
-      activities.forEach((activity) => {
-        if (pluginOptions.activities && pluginOptions.activities.extend) {
-          pluginOptions.activities.extend({activity})
-        }
+      activities.forEach(createActivityNode)
 
-        actions.createNode({
-          ...activity,
-          id: activity.id.toString(),
-          internal: {
-            type: "StravaActivity",
-            contentDigest: createContentDigest(activity),
-          },
-        })
-      })
+      reporter.success(`source-strava: ${fetchedCount} new activities fetched`)
+    }
 
-      reporter.success(`source-strava: ${activities.length} activities fetched`)
+    // `gatsby-source-strava-activity`, refetching one activity while the dev
+    // server is running, would otherwise need a full restart to show up
+    if (store.getState().program._[0] === "develop") {
+      watchStore({storeDir, actions, createActivityNode, getNode, reporter})
     }
 
     const athlete = await fetchWithRateLimit({
