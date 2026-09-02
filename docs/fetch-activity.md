@@ -83,19 +83,10 @@ gatsby-source-strava-activity 4291234567 --streams latlng
 An activity without GPS data, an indoor workout for instance, simply comes back
 without that stream, no error and no `coordinates`.
 
-Strava caps a stream at 10000 points. Beyond that, on a very long ride, the
-`polyline` of the detailed activity is denser than the stream, at the cost of
-being rounded to about a meter:
-
-| Source                 | 2 h ride | 18 h ride |
-| ---------------------- | -------- | --------- |
-| `map.summary_polyline` | 288      | 223       |
-| `map.polyline`         | 3906     | 11038     |
-| `latlng` stream        | 10000    | 10000     |
-
-`coordinates` is built from the stream when it is there, then from `polyline`,
-then from `summary_polyline`. `--refresh` alone is enough to get the complete
-track, without spending a request on a stream.
+`coordinates` is built from the stream when it is there, then from
+`map.polyline`, the complete track rounded to about a meter, then from
+`map.summary_polyline`, its simplified version. `--refresh` alone is enough to
+get `polyline`, without spending a request on a stream.
 
 Pick several of them, or take everything:
 

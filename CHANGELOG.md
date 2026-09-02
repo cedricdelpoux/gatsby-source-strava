@@ -1,3 +1,15 @@
+# 3.3.0
+
+## Features
+
+- feat: watch the store in `gatsby develop`, refetching an activity in
+  another terminal now shows up without restarting the dev server
+
+## Fixes
+
+- fix: stop capping the `latlng` stream at 10000 points, a very long
+  activity could lose a short deviation the capped stream resampled away
+
 # 3.2.1
 
 ## Fixes
@@ -5,6 +17,8 @@
 - fix: raise the request timeout from 10s to 30s
 - fix: retry a request twice on a network timeout
 - fix: name which call failed on a network error
+- fix: log only the newly fetched activities, not the whole store
+- fix: log the store path relative to the site, not the full absolute one
 
 # 3.2.0
 

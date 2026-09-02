@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-strava",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "description": "Gatsby plugin to use Strava as a data source",
   "repository": {
     "type": "git",
