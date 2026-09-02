@@ -30,6 +30,7 @@
     "express": "^5.2.1",
     "glob": "^13.0.6",
     "inquirer": "^8.2.0",
+    "json-bigint": "^1.0.0",
     "open": "^8.4.0",
     "strava-v3": "^4.0.1"
   },

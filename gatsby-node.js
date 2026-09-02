@@ -2,6 +2,7 @@ const path = require("path")
 
 const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
+const {normalizeActivity} = require("./utils/normalize.js")
 const {fetchWithRateLimit} = require("./utils/rate-limit.js")
 const {createStore} = require("./utils/store.js")
 const {strava} = require("./utils/strava.js")
@@ -51,17 +52,22 @@ exports.sourceNodes = async (
     )
     const stravaStore = createStore({dir: storeDir})
 
+    // The activity is normalized before `extend` runs, so that a site adding
+    // its own fields reads it in the shape it will query it in, and so that
+    // whatever it adds passes through untouched
     const createActivityNode = (activity) => {
+      const normalized = normalizeActivity(activity)
+
       if (pluginOptions.activities && pluginOptions.activities.extend) {
-        pluginOptions.activities.extend({activity})
+        pluginOptions.activities.extend({activity: normalized})
       }
 
       actions.createNode({
-        ...activity,
-        id: activity.id.toString(),
+        ...normalized,
+        id: normalized.id.toString(),
         internal: {
           type: "StravaActivity",
-          contentDigest: createContentDigest(activity),
+          contentDigest: createContentDigest(normalized),
         },
       })
     }

@@ -1,3 +1,4 @@
+const JSONbig = require("json-bigint")
 const stravaApi = require("strava-v3")
 
 // `strava-v3` hardcodes a 10s axios timeout, with no way to change it through
@@ -8,10 +9,30 @@ const stravaApi = require("strava-v3")
 const AXIOS_TIMEOUT_MS = 30000
 
 try {
-  require("strava-v3/axiosUtility").axiosInstance.defaults.timeout =
-    AXIOS_TIMEOUT_MS
+  const {axiosInstance} = require("strava-v3/axiosUtility")
+
+  axiosInstance.defaults.timeout = AXIOS_TIMEOUT_MS
+
+  // `strava-v3` asks axios for `responseType: "json"`, which makes axios
+  // parse the body with the native `JSON.parse` before the response ever
+  // reaches `strava-v3`'s own bigint-safe parsing below (that one only runs
+  // on a still-unparsed string, which axios' auto-parsing never leaves it
+  // as). A segment effort id, at 19 digits, silently loses precision to a
+  // rounded double as a result. Swapping in `json-bigint` here is what keeps
+  // every response parsed the way `toNumbers` below expects.
+  axiosInstance.defaults.transformResponse = [
+    (data) => {
+      if (typeof data !== "string") return data
+
+      try {
+        return JSONbig.parse(data)
+      } catch {
+        return data
+      }
+    },
+  ]
 } catch {
-  // Falls back to strava-v3's own 10s default
+  // Falls back to strava-v3's own defaults, and to its lossy native parsing
 }
 
 class StravaError extends Error {
