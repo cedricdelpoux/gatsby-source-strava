@@ -1,108 +1,86 @@
+# 3.2.1
+
+## Fixes
+
+- fix: raise the request timeout from 10s to 30s
+- fix: retry a request twice on a network timeout
+- fix: name which call failed on a network error
+
 # 3.2.0
 
 ## Breaking changes
 
-- Changed: requires Node 20 or later, `strava-v3` moved to that requirement in
-  its own 3.x series
+- Changed: requires Node 20 or later
 
 ## Features
 
-- feat: `gatsby-source-strava-activity` no longer re-fetches an activity
-  already in the store just to add a stream or a detail to it, saving a
-  request; pass `--refresh` to also pick up an edit made on strava.com
-- feat: running `gatsby-source-strava-activity` again never drops what an
-  earlier run added — an option not passed this time falls back to what is
-  already stored, and streams are merged type by type instead of replaced
+- feat: `--refresh` re-fetches the activity on `gatsby-source-strava-activity`;
+  adding a stream or a detail no longer needs it
+- feat: refetching an activity never drops what an earlier run added
 
 ## Fixes
 
-- fix: turn json-bigint decimals back into numbers, some GraphQL fields
-  (`start_latlng`, `average_heartrate`...) came back as a string on some
-  activities and a number on others, and Gatsby drops a field whose type
-  changes from one node to the next
-- fix: read Strava's error message from `error.data`, `strava-v3` no longer
-  attaches it to `error.error` now that it dropped `request-promise`
-- fix: streams came back empty, both with the `withStreams` plugin option and
-  with `gatsby-source-strava-activity` — `strava-v3` only forwards a `keys`
-  argument to the endpoint, not the `types` this plugin sent, and
-  `key_by_type` changes the response into a shape this plugin never parsed
-- fix: remove the stale `.lintstagedrc`, present since the very first commit
-  and silently taking over the `lint-staged` key of `package.json` — ESLint
-  never actually ran in the pre-commit hook, only Prettier did
+- fix: turn json-bigint decimals back into numbers
+- fix: read Strava's error message from `error.data`
+- fix: streams came back empty, filtering silently did nothing
+- fix: remove the stale `.lintstagedrc`, ESLint never ran pre-commit
 
 ## Dependencies
 
-- chore: update `strava-v3` to 4.0.1, which replaces `request` and
-  `request-promise`, both deprecated, with axios
-- chore: update `express` to 5 and `glob` to 13, both still `require()`-able and
-  a drop-in for what this plugin uses from them
-- chore: update `prettier` to 3, dev only, only reformats the docs
-- chore: update `eslint` to 9 and `eslint-config-prettier` to 10, migrating to
-  ESLint's flat config and merging the `example/` one into it; update `husky`
-  to 9 and `lint-staged` to 16, both restructured, dev only
-- chore: update inquirer and open within their current major versions
+- chore: update `strava-v3` to 4.0.1, drops `request` for axios
+- chore: update `express` to 5 and `glob` to 13
+- chore: update `prettier` to 3
+- chore: update `eslint` to 9, migrated to its flat config
+- chore: update `husky` to 9 and `lint-staged` to 16
+- chore: update inquirer and open
 
 # 3.1.0
 
 ## Features
 
 - feat: keep activities in a `.strava` store instead of the Gatsby cache
-- feat: add the `gatsby-source-strava-activity` command, which fetches one
-  activity again and replaces its file
-- feat: use the complete track of a refetched activity, which comes with the
-  detailed activity at no extra request, instead of the simplified one
+- feat: add `gatsby-source-strava-activity`, to refetch one activity
+- feat: a refetched activity gets its complete track, not the simplified one
 
 ## Fixes
 
-- fix: replace env variables instead of appending duplicates, so that
-  generating a token again refreshes it rather than stacking an outdated one
+- fix: replace env variables instead of appending duplicates
 
 ## Documentation
 
-- docs: document the store, its incremental fetch and its limitations
-- docs: document the `gatsby-source-strava-activity` command
-- docs: add the data, store, commands and documentation sections to the readme
+- docs: document the store and the `gatsby-source-strava-activity` command
 
 # 3.0.0
 
 ## Breaking changes
 
-- Removed: `withRelated` option, Strava closed the endpoint it relied on
-- Changed: `coordinates` is now absent instead of empty on an activity without
-  a track, filter with `coordinates: {ne: null}`
-- Changed: the plugin declares its own GraphQL types, a site declaring
-  conflicting ones must drop them
+- Removed: `withRelated` option, Strava closed the endpoint
+- Changed: `coordinates` is absent instead of empty without a track
+- Changed: the plugin declares its own GraphQL types
 
 ## Features
 
-- feat: declare Strava types in plugin schema, sites no longer need their own
-  `createSchemaCustomization` and queries survive an empty fetch
-- feat: add `waitOnRateLimit` and `stopOnRateLimit` plugin options
-- perf: wait until the next quarter hour on a rate limit rather than 15 min
+- feat: declare Strava types in plugin schema
+- feat: add `waitOnRateLimit` and `stopOnRateLimit` options
+- perf: wait until the next quarter hour on a rate limit
 
 ## Fixes
 
-- fix: `withKoms` and `withPhotos` crashed the build, the underlying
-  `strava-v3` methods do not exist
-- fix: apply rate limit handling to the athlete fetch, a rate limit made the
-  build fail whatever the options
-- fix: read the `x-readratelimit-*` headers, a read only plugin reaches those
-  limits first
-- fix: only move the fetch cursor once the whole history was fetched, a
-  truncated first fetch lost the older activities for good
+- fix: `withKoms` and `withPhotos` crashed the build
+- fix: apply rate limit handling to the athlete fetch
+- fix: read the `x-readratelimit-*` headers
+- fix: only move the fetch cursor once the whole history was fetched
 - fix: await the activities restored from cache
-- fix: build `coordinates` from the latlng streams when they are fetched
-- fix: reject network errors instead of leaving the build hanging forever
-- fix: listen on a free port when generating a token, 5000 is taken by the
-  AirPlay receiver on macOS
+- fix: build `coordinates` from the latlng streams
+- fix: reject network errors instead of hanging forever
+- fix: listen on a free port when generating a token
 - fix: drop the undeclared `request-promise` dependency
-- fix: replace `system-sleep`, which blocked the event loop while waiting
+- fix: replace `system-sleep`, which blocked the event loop
 
 ## Documentation
 
-- docs: rename `activitiesOptions` to `activities`, the option was renamed in
-  2.0.0 and the documented one was silently ignored
-- docs: update the Strava rate limits, 100 requests per 15 min and 1000 daily
+- docs: rename `activitiesOptions` to `activities`
+- docs: update the Strava rate limits
 - docs: fix the outdated `create-pages` example
 
 # 2.4.0
