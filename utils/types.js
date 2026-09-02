@@ -16,6 +16,12 @@
 // segment effort id, at 19 digits, is already past. `normalize.js` is what
 // turns them into strings on their way into a node, and drops the `id_str`
 // twins Strava sends for that same reason.
+//
+// That normalization is also why so little is declared below: an id reaching
+// inference as a string is typed as one, so the `comments`, `laps`, `photos`
+// and `segment_efforts` added by the `gatsby-source-strava-activity` command
+// need nothing here, and are left to inference as `fetch-activity.md`
+// documents.
 
 const types = `
 
@@ -50,13 +56,19 @@ const types = `
     measurement_preference: String
     postable_clubs_count: Int
     resource_state: Int
+    koms: [StravaAthleteKom]
+  }
+
+  type StravaAthleteKom {
+    kom_rank: Int
+    activity: StravaActivity @link(by: "id", from: "activity.id")
   }
 
   type StravaActivity implements Node {
     id: ID!
     external_id: String
     upload_id: String
-    athlete: StravaActivityAthlete
+    athlete: StravaAthlete @link(by: "id", from: "athlete.id")
     name: String
     distance: Float
     moving_time: Int
@@ -110,11 +122,6 @@ const types = `
     display_hide_heartrate_option: Boolean
     has_kudoed: Boolean
     suffer_score: Int
-    resource_state: Int
-  }
-
-  type StravaActivityAthlete {
-    id: String
     resource_state: Int
   }
 

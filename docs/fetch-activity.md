@@ -121,7 +121,9 @@ npm run fetch-activity -- 4291234567
 
 The added fields are not part of the types the plugin declares, Gatsby infers
 them from the activities that carry them. They are queryable as soon as one
-activity in the store holds them:
+activity in the store holds them. Their ids are strings, like every id the
+plugin creates — a segment effort id, at 19 digits, is past what a number
+holds exactly:
 
 ```graphql
 {
@@ -139,6 +141,12 @@ activity in the store holds them:
     }
 }
 ```
+
+Each lap, effort, comment and photo comes back from Strava with the activity
+and the athlete it belongs to embedded on it. Those are dropped, being the
+very activity and athlete they hang off — `laps { activity { name } }` was
+only ever a way round to `name`. The athlete on a comment is kept: that one
+is whoever wrote it.
 
 [strava-activity]: https://developers.strava.com/docs/reference/#api-Activities-getActivityById
 [strava-streams]: https://developers.strava.com/docs/reference/#api-models-StreamSet

@@ -2,7 +2,7 @@ const path = require("path")
 
 const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
-const {normalizeActivity, normalizeIds} = require("./utils/normalize.js")
+const {normalizeActivity, normalizeAthlete} = require("./utils/normalize.js")
 const {fetchWithRateLimit} = require("./utils/rate-limit.js")
 const {createStore} = require("./utils/store.js")
 const {strava} = require("./utils/strava.js")
@@ -104,7 +104,7 @@ exports.sourceNodes = async (
       return
     }
 
-    const normalizedAthlete = normalizeIds(athlete)
+    const normalizedAthlete = normalizeAthlete(athlete)
 
     if (pluginOptions.athlete && pluginOptions.athlete.extend) {
       // The activities are normalized here rather than upfront, so that a

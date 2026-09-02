@@ -26,6 +26,42 @@
 // the plugin rather than read from Strava, and never caught this.
 const COORDINATE_FIELDS = ["start_latlng", "end_latlng"]
 
+// Strava embeds, on every lap, effort, comment and photo, a backlink to the
+// activity and the athlete they belong to — the very ones being read. A long
+// ride carries 240 copies of those same two ids, and the schema ends up
+// offering `laps { activity { name } }`, a way round to a name sitting one
+// level up.
+//
+// `comments[].athlete` is the exception kept: that one is whoever left the
+// comment, another person entirely, not the activity's own athlete.
+const REDUNDANT_ACTIVITY_FIELDS = {
+  comments: ["activity_id"],
+  laps: ["activity", "athlete"],
+  photos: ["activity_id", "activity_name", "athlete_id"],
+  segment_efforts: ["activity", "athlete"],
+}
+
+// The athlete's koms are efforts too, and carry the same two backlinks. Only
+// one of them is redundant here: a kom points at whichever activity set it,
+// which is the one thing the list does not otherwise say.
+const REDUNDANT_ATHLETE_FIELDS = {
+  koms: ["athlete"],
+}
+
+const pruneRedundant = (node, fields) => {
+  Object.keys(fields).forEach((collection) => {
+    const items = node[collection]
+
+    if (!Array.isArray(items)) return
+
+    items.forEach((item) => {
+      fields[collection].forEach((field) => {
+        delete item[field]
+      })
+    })
+  })
+}
+
 const ID_TWIN_SUFFIX = "_str"
 
 const isId = (key) =>
@@ -64,8 +100,8 @@ const toNumber = (value) =>
     ? +value
     : value
 
-// What an activity needs on its way into a node: its ids, and the coordinates
-// a store filled over several versions can hold as strings
+// What an activity needs on its way into a node: its ids, the backlinks it
+// repeats, and the coordinates a store filled over several versions can hold
 const normalizeActivity = (activity) => {
   const normalized = normalizeIds(activity)
 
@@ -75,7 +111,19 @@ const normalizeActivity = (activity) => {
     }
   })
 
+  pruneRedundant(normalized, REDUNDANT_ACTIVITY_FIELDS)
+
   return normalized
 }
 
-module.exports = {normalizeActivity, normalizeIds}
+// The athlete needs none of the shapes above, only its ids and the backlinks
+// its koms carry
+const normalizeAthlete = (athlete) => {
+  const normalized = normalizeIds(athlete)
+
+  pruneRedundant(normalized, REDUNDANT_ATHLETE_FIELDS)
+
+  return normalized
+}
+
+module.exports = {normalizeActivity, normalizeAthlete}
