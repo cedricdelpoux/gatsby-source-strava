@@ -30,7 +30,7 @@ type by type, so asking for `heartrate` after a `latlng` run keeps both.
 | `--comments`        | Add comments                                                        |
 | `--kudos`           | Add kudos                                                           |
 | `--laps`            | Add laps                                                            |
-| `--photos`          | Add photos                                                          |
+| `--photos[=size]`   | Add photos, 1800 pixels wide unless a size is given                 |
 | `--zones`           | Add zones, needs a Strava subscription                              |
 | `--refresh`         | Re-fetch the activity itself, to pick up an edit made on strava.com |
 | `--all`             | Every option above, `--refresh` included                            |
@@ -141,6 +141,29 @@ holds exactly:
     }
 }
 ```
+
+A photo comes back at 1800 pixels, capped at its own resolution, under the
+`_1800` key — Strava keys a photo url by the size asked of it, and GraphQL
+cannot name a field starting with a digit. An activity fetched before the
+plugin asked for a size holds a placeholder image instead, until it is
+fetched again.
+
+Ask for another size with `--photos=600`, and the key follows it, `_600`.
+Strava answers a single size a call, so fetching an activity at 600 and
+another at 1800 leaves the two under different keys — worth keeping to one
+size across a store. The size has to be written with an `=`: a bare number
+after `--photos` is read as the activity id.
+
+`photos` is always the list `--photos` fetches. Strava also puts a
+`{primary, count}` summary of its own on an activity, under that same name;
+it is `photos_summary` here, so that the two shapes stop colliding — a
+collision that used to cost every field of both. Only that summary names the
+photo Strava leads with, nothing in the list itself does.
+
+That primary comes at three sizes, `urls { _100 _600 _1800 }`, all three on
+the one call `--refresh` already makes — a cover photo, thumbnail to full
+size, without spending a request on the list. An activity fetched before the
+plugin asked for 1800 reads it null until `--refresh` picks it up.
 
 Each lap, effort, comment and photo comes back from Strava with the activity
 and the athlete it belongs to embedded on it. Those are dropped, being the

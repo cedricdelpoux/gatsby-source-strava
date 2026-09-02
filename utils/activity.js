@@ -2,10 +2,29 @@ const polyline = require("@mapbox/polyline")
 
 const {strava} = require("./strava.js")
 
+// Strava sizes the primary photo of an activity at 100 and 600 pixels when
+// left to itself. It takes `photo_sizes[]` instead, repeated once per size,
+// and answers all of them together — unlike the photos endpoint, which
+// serves a single size a call. Asking for 1800 as well costs nothing, this
+// being the same request, and gives a full size cover photo without spending
+// one on the photo list.
+//
+// These sizes are fixed rather than an option: they name the fields of
+// `StravaActivityPhotosSummaryPrimaryUrls`, which has to be declared because
+// an activity without a photo carries a null primary that inference cannot
+// see into.
+const PRIMARY_PHOTO_SIZES = [100, 600, 1800]
+
+// `strava-v3` forwards `include_all_efforts` alone on this call and drops
+// everything else, so the sizes go through the url
 const getActivityDetails = async ({activityId: id}) =>
   strava.fetch({
-    args: {id},
-    method: {category: "activities", name: "get"},
+    args: {},
+    method: {
+      path: `activities/${id}?${PRIMARY_PHOTO_SIZES.map(
+        (size) => `photo_sizes[]=${size}`
+      ).join("&")}`,
+    },
   })
 
 const getActivityLaps = async ({activityId: id}) =>
@@ -26,11 +45,25 @@ const getActivityKudos = async ({activityId: id}) =>
     method: {category: "activities", name: "listKudos"},
   })
 
-// `strava-v3` has no method for this endpoint
-const getActivityPhotos = async ({activityId: id}) =>
+// Asked for no size, Strava answers with a placeholder image rather than the
+// photo, so one is always requested. It answers a single size per call, keyed
+// by the size asked rather than the one returned, and caps it at the photo's
+// own resolution: 1800 is Strava's own default, and comes back as the
+// original on anything smaller.
+//
+// The size cannot go through `args`: `strava-v3` builds a call by path from
+// the url alone, dropping everything else, which is why it is in the query
+// string here.
+const DEFAULT_PHOTO_SIZE = 1800
+
+const getActivityPhotos = async ({activityId: id, size}) =>
   strava.fetch({
     args: {},
-    method: {path: `activities/${id}/photos`},
+    method: {
+      path: `activities/${id}/photos?size=${
+        typeof size === "number" ? size : DEFAULT_PHOTO_SIZE
+      }`,
+    },
   })
 
 const getActivityZones = async ({activityId: id}) =>
@@ -111,8 +144,10 @@ const buildActivity = async ({
   const laps = withLaps
     ? await getActivityLaps({activityId})
     : existing && existing.laps
+  // `withPhotos` doubles as the size to ask for, the way `withStreams`
+  // doubles as a function: `true` takes the default
   const photos = withPhotos
-    ? await getActivityPhotos({activityId})
+    ? await getActivityPhotos({activityId, size: withPhotos})
     : existing && existing.photos
   const zones = withZones
     ? await getActivityZones({activityId})
@@ -134,6 +169,13 @@ const buildActivity = async ({
 
   const coordinates = getCoordinates({activity, streams})
 
+  // Strava puts a `{primary, count}` summary of its own on the activity,
+  // under the same `photos` name the fetched list takes. Writing the list
+  // over it used to lose `primary`, the only thing naming the photo Strava
+  // leads with — nothing in the list itself says which one that is.
+  const photosSummary =
+    activity.photos && !Array.isArray(activity.photos) ? activity.photos : null
+
   return {
     ...activity,
     // Manual and indoor activities have no track at all
@@ -141,6 +183,7 @@ const buildActivity = async ({
     ...(comments && {comments}),
     ...(kudos && {kudos}),
     ...(laps && {laps}),
+    ...(photosSummary && {photos_summary: photosSummary}),
     ...(photos && {photos}),
     ...(streams && {streams}),
     ...(zones && {zones}),

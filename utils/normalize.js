@@ -26,6 +26,16 @@
 // the plugin rather than read from Strava, and never caught this.
 const COORDINATE_FIELDS = ["start_latlng", "end_latlng"]
 
+// Strava uses `photos` for two shapes: the `{primary, count}` summary it puts
+// on an activity, and the array of photos that `gatsby-source-strava-activity
+// --photos` fetches over the top of it. Gatsby, meeting both across a store,
+// drops every field of the type rather than choosing. The summary moves aside
+// so that `photos` is always the list.
+//
+// `activity.js` keeps the two apart from now on, so this is here for the
+// activities a previous version already stored under the one name.
+const PHOTOS_SUMMARY_FIELD = "photos_summary"
+
 // Strava embeds, on every lap, effort, comment and photo, a backlink to the
 // activity and the athlete they belong to — the very ones being read. A long
 // ride carries 240 copies of those same two ids, and the schema ends up
@@ -58,6 +68,34 @@ const pruneRedundant = (node, fields) => {
       fields[collection].forEach((field) => {
         delete item[field]
       })
+    })
+  })
+}
+
+// Strava keys a photo's urls and sizes by the size asked of it — `100`,
+// `600`, `1800` — and GraphQL forbids a field name starting with a digit:
+// its parser rejects `100:`, and `"100":` too, before Gatsby ever sees them.
+// Inference already works around it by serving them prefixed, as `_100`, so
+// prefixing the key itself changes no query that already works, and is what
+// lets `types.js` declare them at all.
+//
+// A size Strava has not used before needs nothing here: prefixed the same
+// way, it reaches inference exactly as it does today.
+const SIZE_KEYED_FIELDS = ["urls", "sizes"]
+
+const prefixSizeKeys = (owner) => {
+  if (!owner || typeof owner !== "object") return
+
+  SIZE_KEYED_FIELDS.forEach((field) => {
+    const sized = owner[field]
+
+    if (!sized || typeof sized !== "object" || Array.isArray(sized)) return
+
+    Object.keys(sized).forEach((key) => {
+      if (!/^\d/.test(key)) return
+
+      sized[`_${key}`] = sized[key]
+      delete sized[key]
     })
   })
 }
@@ -100,8 +138,8 @@ const toNumber = (value) =>
     ? +value
     : value
 
-// What an activity needs on its way into a node: its ids, the backlinks it
-// repeats, and the coordinates a store filled over several versions can hold
+// Everything an activity needs on its way into a node: its ids, and the two
+// shapes above that a store filled over several versions can hold
 const normalizeActivity = (activity) => {
   const normalized = normalizeIds(activity)
 
@@ -111,7 +149,21 @@ const normalizeActivity = (activity) => {
     }
   })
 
+  const {photos} = normalized
+
+  if (photos && !Array.isArray(photos)) {
+    normalized[PHOTOS_SUMMARY_FIELD] = photos
+    delete normalized.photos
+  }
+
   pruneRedundant(normalized, REDUNDANT_ACTIVITY_FIELDS)
+
+  const summary = normalized[PHOTOS_SUMMARY_FIELD]
+
+  if (summary) prefixSizeKeys(summary.primary)
+  if (Array.isArray(normalized.photos)) {
+    normalized.photos.forEach(prefixSizeKeys)
+  }
 
   return normalized
 }

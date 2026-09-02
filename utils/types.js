@@ -95,6 +95,7 @@ const types = `
     total_photo_count: Int
     pr_count: Int
     map: StravaActivityMap
+    photos_summary: StravaActivityPhotosSummary
     coordinates: [[Float!]!]
     start_latlng: [Float!]
     end_latlng: [Float!]
@@ -131,6 +132,40 @@ const types = `
     summary_polyline: String
     resource_state: Int
   }
+
+  # These are the summary's own sizes, the ones PRIMARY_PHOTO_SIZES in
+  # activity.js asks for, and not those of a photo in the fetched list: that
+  # list holds whatever size was asked of it, one per call, so its urls are
+  # left to inference and declared nowhere here.
+  #
+  # Strava keys them by size, which GraphQL cannot name, a field starting
+  # with a digit being a syntax error. normalize.js prefixes the key, the way
+  # inference already served it, so 100 is queried as _100.
+  #
+  # An activity stored before the plugin asked for 1800 holds only the first
+  # two until it is fetched again, _1800 reading null until then.
+  type StravaActivityPhotosSummaryPrimaryUrls {
+    _100: String
+    _600: String
+    _1800: String
+  }
+
+  # An activity with no photo still carries the summary, with a null primary,
+  # and inference cannot type what it only ever sees as null
+  type StravaActivityPhotosSummaryPrimary {
+    unique_id: String
+    source: Int
+    media_type: Int
+    urls: StravaActivityPhotosSummaryPrimaryUrls
+  }
+
+  type StravaActivityPhotosSummary {
+    count: Int
+    use_primary_photo: Boolean
+    primary: StravaActivityPhotosSummaryPrimary
+  }
+
+
 `
 
 module.exports = {types}

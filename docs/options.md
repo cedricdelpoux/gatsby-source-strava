@@ -69,8 +69,13 @@ module.exports = {
                     withKudos: true,
                     // Add laps to every activity
                     withLaps: true,
-                    // Add photos to every activity
+                    // Add photos to every activity, 1800 pixels wide
                     withPhotos: true,
+                    // --- OR
+                    // Add them at another size, capped at the photo's own
+                    // resolution. Strava answers one size per photo, and
+                    // keys the url by it: `urls { _600 }` here
+                    withPhotos: 600,
                     // Add zones to every activity (need Strava Summit Analysis Pack)
                     withZones: true,
                     // Add streams to every activity (see streamTypes)

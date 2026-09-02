@@ -22,7 +22,9 @@ Options:
   --comments         Add comments
   --kudos            Add kudos
   --laps             Add laps
-  --photos           Add photos
+  --photos[=size]    Add photos, 1800 pixels wide unless a size is given.
+                      Strava answers one size per photo, capped at the
+                      photo's own resolution
   --zones            Add zones, needs a Strava subscription
   --refresh          Re-fetch the activity itself, to pick up an edit made on
                       strava.com. Costs one request; skipped by default, and
@@ -96,6 +98,15 @@ const parseArgs = (argv) => {
       options.withStreams = true
       const types = readValue()
       options.streamsTypes = types ? types.split(",") : STREAMS_TYPES
+    } else if (name === "photos") {
+      // Only `--photos=600` carries the size, never `--photos 600`: a bare
+      // number after an option is an activity id, so that a script holding
+      // `--photos` still reads the id off the command line
+      if (inlineValue && !/^\d+$/.test(inlineValue)) {
+        throw new Error(`\`--photos=${inlineValue}\` is not a photo size`)
+      }
+
+      options.withPhotos = inlineValue ? Number(inlineValue) : true
     } else if (name === "all") {
       refresh = true
       options.withStreams = true
