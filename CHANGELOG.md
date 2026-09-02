@@ -1,3 +1,26 @@
+# 4.0.0
+
+## Breaking changes
+
+- Removed: the `id_str`, `upload_id_str` and `activity_id_str` fields
+- Removed: the activity and athlete backlinks on laps, efforts and photos
+- Changed: every id is a `String`, filters included
+- Changed: `athlete` and `koms[].activity` resolve to their nodes
+- Changed: `photos` is always the list, its summary is `photos_summary`
+
+## Features
+
+- feat: add the primary photo at 1800 pixels, next to 100 and 600
+- feat: choose the photo size, with `withPhotos: 600` or `--photos=600`
+
+## Fixes
+
+- fix: keep a segment effort id whole, axios parsed before json-bigint
+- fix: read the coordinates an older version stored as strings
+- fix: fetch photos instead of placeholder images
+- fix: fetch kudos, renamed `listKudoers` upstream, and all of them
+- fix: query every field of a photo, and the primary of an empty summary
+
 # 3.3.0
 
 ## Features
