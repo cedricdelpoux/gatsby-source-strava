@@ -1,3 +1,5 @@
+const path = require("path")
+
 const {buildActivity} = require("./activity.js")
 const {handleRateLimit, isRateLimitError} = require("./rate-limit.js")
 const {strava} = require("./strava.js")
@@ -42,8 +44,10 @@ const getActivities = async ({
   let mustRetry = false
   let isTruncated = false
   let after = options.after
+  let fetchedCount = 0
   const activities = {}
   const fetchDate = Date.now()
+  const relativeDir = path.relative(process.cwd(), store.dir)
 
   let stored = await store.readActivities()
 
@@ -52,7 +56,7 @@ const getActivities = async ({
 
     if (stored.length > 0) {
       reporter.info(
-        `source-strava: ${stored.length} activities moved to ${store.dir}`
+        `source-strava: ${stored.length} activities moved to ${relativeDir}`
       )
     }
   }
@@ -65,7 +69,7 @@ const getActivities = async ({
 
   if (restoredCount > 0 && debug) {
     reporter.success(
-      `source-strava: ${restoredCount} activities restored from ${store.dir}`
+      `source-strava: ${restoredCount} activities restored from ${relativeDir}`
     )
   }
 
@@ -102,6 +106,7 @@ const getActivities = async ({
           await store.writeActivity(activityFull)
         }
 
+        fetchedCount += activitiesPageFull.length
         hasNextPage = true
         page++
       }
@@ -132,7 +137,7 @@ const getActivities = async ({
     await store.writeState({lastFetch: fetchDate})
   }
 
-  return Object.values(activities)
+  return {activities: Object.values(activities), fetchedCount}
 }
 
 const getActivitiesPageFull = async ({options, page}) => {

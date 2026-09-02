@@ -39,13 +39,16 @@ const getActivityZones = async ({activityId: id}) =>
     method: {category: "activities", name: "listZones"},
   })
 
+// No `resolution` is passed: Strava then returns every recorded point
+// instead of capping the stream at 10000 and resampling past that, which on
+// a long activity can smooth away a short deviation - a brief out-and-back,
+// say - narrow enough to fall between two resampled points. `series_type`
+// only matters to that resampling, so it is dropped along with it.
 const getActivityStreams = ({activityId: id, streamsTypes: keys}) =>
   strava.fetch({
     args: {
       id,
       keys,
-      series_type: "time",
-      resolution: "high",
     },
     method: {category: "streams", name: "activity"},
     format: (payload) => {
@@ -61,12 +64,10 @@ const getActivityStreams = ({activityId: id, streamsTypes: keys}) =>
     },
   })
 
-// The latlng stream holds the recorded points at full precision, but Strava
-// caps it at 10000, so `polyline`, the complete track of a detailed activity
-// encoded to about a meter, can be denser on a very long one. The stream still
-// comes first: it was asked for explicitly, and the difference only shows up
-// past 10000 points. `summary_polyline` is the simplified track of a listed
-// activity, the only one the plugin gets on its own.
+// The latlng stream, fetched at full resolution, holds every recorded point
+// and beats `polyline`, the track Strava simplifies for map display, which in
+// turn beats `summary_polyline`, the simplified track of a listed activity,
+// the only one the plugin gets on its own.
 const getCoordinates = ({activity, streams}) => {
   const latlngStream = streams && streams.latlng
   const activityMap = activity.map || {}
