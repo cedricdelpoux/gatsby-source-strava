@@ -95,15 +95,25 @@ exports.sourceNodes = async (
       watchStore({storeDir, actions, createActivityNode, getNode, reporter})
     }
 
-    const athlete = await fetchWithRateLimit({
+    let athlete = await fetchWithRateLimit({
       fetch: () => getAthlete({options: pluginOptions.athlete}),
       options: rateLimit,
       reporter,
     })
 
-    if (!athlete) {
-      reporter.warn("source-strava: Athlete not fetched")
-      return
+    if (athlete) {
+      await stravaStore.writeAthlete(athlete)
+    } else {
+      athlete = await stravaStore.readAthlete()
+
+      if (athlete) {
+        reporter.warn(
+          "source-strava: Athlete not fetched, using cached version"
+        )
+      } else {
+        reporter.warn("source-strava: Athlete not fetched")
+        return
+      }
     }
 
     const normalizedAthlete = normalizeAthlete(athlete)
