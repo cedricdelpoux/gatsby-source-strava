@@ -55,14 +55,14 @@ exports.sourceNodes = async (
     // The activity is normalized before `extend` runs, so that a site adding
     // its own fields reads it in the shape it will query it in, and so that
     // whatever it adds passes through untouched
-    const createActivityNode = (activity) => {
+    const createActivityNode = async (activity) => {
       const normalized = normalizeActivity(activity)
 
       if (pluginOptions.activities && pluginOptions.activities.extend) {
         pluginOptions.activities.extend({activity: normalized})
       }
 
-      actions.createNode({
+      await actions.createNode({
         ...normalized,
         id: normalized.id.toString(),
         internal: {
@@ -82,7 +82,9 @@ exports.sourceNodes = async (
     })
 
     if (activities && activities.length > 0) {
-      activities.forEach(createActivityNode)
+      for (const activity of activities) {
+        await createActivityNode(activity)
+      }
 
       reporter.success(`source-strava: ${fetchedCount} new activities fetched`)
     }
@@ -115,7 +117,7 @@ exports.sourceNodes = async (
       })
     }
 
-    actions.createNode({
+    await actions.createNode({
       ...normalizedAthlete,
       id: normalizedAthlete.id.toString(),
       internal: {
