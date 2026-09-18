@@ -1,3 +1,13 @@
+# 4.1.0
+
+## Features
+
+- feat: cache the athlete locally, as a fallback when the fetch fails
+
+## Fixes
+
+- fix: await node creation calls
+
 # 4.0.0
 
 ## Breaking changes
