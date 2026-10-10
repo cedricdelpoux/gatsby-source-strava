@@ -1,5 +1,6 @@
 const {loadEnvFiles} = require("../utils/env.js")
 const {strava} = require("../utils/strava.js")
+const {loadPluginOptions} = require("./config.js")
 
 const STREAMS_TYPES = [
   "time",
@@ -21,7 +22,19 @@ const WITH_OPTIONS = ["comments", "kudos", "laps", "photos", "zones"]
 // command taking them, `buildActivity` doing the work behind all of them
 const DETAILS_OPTIONS = ["streams", ...WITH_OPTIONS, "all"]
 
-const FLAGS = ["all", "force", "help", "refresh", "write", ...WITH_OPTIONS]
+// The options reading the site's `gatsby-config`, taken by every command that
+// fetches activities
+const CONFIG_OPTIONS = ["config", "no-config"]
+
+const FLAGS = [
+  "all",
+  "force",
+  "help",
+  "no-config",
+  "refresh",
+  "write",
+  ...WITH_OPTIONS,
+]
 
 const isActivityId = (value) => /^\d+$/.test(value)
 
@@ -54,11 +67,13 @@ const parseArgs = (argv, {options: accepted, withActivityId = false}) => {
     after: null,
     all: false,
     before: null,
+    configPath: null,
     details: {},
     force: false,
     help: false,
+    noConfig: false,
     refresh: false,
-    storeDir: ".strava",
+    storeDir: null,
     write: false,
   }
 
@@ -99,7 +114,15 @@ const parseArgs = (argv, {options: accepted, withActivityId = false}) => {
     } else if (FLAGS.includes(name) && inlineValue && name !== "photos") {
       throw new Error(`\`--${name}\` takes no value`)
     } else if (name === "dir") {
-      args.storeDir = readValue() || args.storeDir
+      args.storeDir = readValue()
+    } else if (name === "config") {
+      args.configPath = readValue()
+
+      if (!args.configPath) {
+        throw new Error("`--config` needs a path")
+      }
+    } else if (name === "no-config") {
+      args.noConfig = true
     } else if (name === "after" || name === "before") {
       args[name] = parseDate(name, readValue())
     } else if (name === "streams") {
@@ -131,6 +154,24 @@ const parseArgs = (argv, {options: accepted, withActivityId = false}) => {
   }
 
   return args
+}
+
+// The plugin options from the site's `gatsby-config`, with the command line
+// ones on top: a detail option adds to the config or overrides it, as do
+// `--after`, `--before` and `--dir`
+const withPluginOptions = (args) => {
+  const config = args.noConfig
+    ? null
+    : loadPluginOptions({configPath: args.configPath})
+
+  return {
+    after: args.after || (config && config.after),
+    before: args.before || (config && config.before),
+    config,
+    configDetails: (config && config.details) || {},
+    details: {...(config && config.details), ...args.details},
+    storeDir: args.storeDir || (config && config.storeDir) || ".strava",
+  }
 }
 
 // The commands are run on their own, without the `dotenv` call a
@@ -165,9 +206,11 @@ const run = (command) =>
     })
 
 module.exports = {
+  CONFIG_OPTIONS,
   DETAILS_OPTIONS,
   connectStrava,
   isActivityId,
   parseArgs,
   run,
+  withPluginOptions,
 }

@@ -5,7 +5,14 @@ const path = require("path")
 const {buildActivity} = require("../utils/activity.js")
 const {createStore} = require("../utils/store.js")
 const {strava} = require("../utils/strava.js")
-const {DETAILS_OPTIONS, connectStrava, parseArgs, run} = require("./cli.js")
+const {
+  CONFIG_OPTIONS,
+  DETAILS_OPTIONS,
+  connectStrava,
+  parseArgs,
+  run,
+  withPluginOptions,
+} = require("./cli.js")
 
 const PER_PAGE = 200
 
@@ -22,6 +29,10 @@ lists the differences the incremental fetch cannot see: activities deleted on
 strava.com, still in the store, and activities missing from the store, like a
 file uploaded again, which keeps its original start date.
 
+Reads the plugin options from the site's gatsby-config, so that a missing
+activity gets the details a build would have given it, and the comparison
+stays within the plugin's after and before options.
+
 Costs one request every ${PER_PAGE} activities. Nothing is changed unless
 --write is passed.
 
@@ -31,9 +42,9 @@ Options:
   --force            Delete them even when they are more than a tenth of the
                       store
   --after <date>     Only compare the activities started after this date or
-                      timestamp, as the plugin's \`after\` option
+                      timestamp, overriding the plugin's after option
   --before <date>    Only compare the activities started before this date or
-                      timestamp, as the plugin's \`before\` option
+                      timestamp, overriding the plugin's before option
   --streams [types]  Add streams to the missing activities, comma separated,
                       all of them when empty
   --comments         Add comments to the missing activities
@@ -44,11 +55,15 @@ Options:
   --zones            Add zones to the missing activities, needs a Strava
                       subscription
   --all              Every detail option above
-  --dir <path>       Store directory, defaults to .strava
+  --dir <path>       Store directory, defaults to the plugin's storeDir option,
+                      or .strava
+  --config <path>    Site config to read the plugin options from, defaults to
+                      the gatsby-config of the current directory
+  --no-config        Rely on the options above alone
   --help             Show this message
 
-Each detail option costs one request per missing activity, the same as
-gatsby-source-strava-activity.
+The detail options add to the plugin options, and cost one request per
+missing activity, the same as gatsby-source-strava-activity.
 `
 
 const listAccountActivities = async ({after, before}) => {
@@ -75,17 +90,18 @@ const formatActivity = (activity) =>
   `  ${activity.id}  ${activity.start_date.substring(0, 10)}  ${activity.name}`
 
 const syncActivities = async (argv) => {
-  const {
-    after,
-    before,
-    details: options,
-    force,
-    help,
-    storeDir,
-    write,
-  } = parseArgs(argv, {
-    options: [...DETAILS_OPTIONS, "write", "force", "after", "before", "dir"],
+  const args = parseArgs(argv, {
+    options: [
+      ...DETAILS_OPTIONS,
+      ...CONFIG_OPTIONS,
+      "write",
+      "force",
+      "after",
+      "before",
+      "dir",
+    ],
   })
+  const {force, help, write} = args
 
   if (help) {
     console.log(usage)
@@ -93,10 +109,25 @@ const syncActivities = async (argv) => {
     return true
   }
 
+  const {
+    after,
+    before,
+    config,
+    details: options,
+    storeDir,
+  } = withPluginOptions(args)
+
+  if (config) {
+    console.log(
+      `Plugin options read from ${path.relative(process.cwd(), config.file)}`
+    )
+  }
+
   await connectStrava()
 
   const store = createStore({dir: path.resolve(storeDir)})
   const storedActivities = await store.readActivities()
+  const listDate = Date.now()
   const accountActivities = await listAccountActivities({after, before})
 
   // Only a stored activity strictly inside the window can be told deleted:
@@ -123,12 +154,10 @@ const syncActivities = async (argv) => {
   console.log(`${missing.length} missing from the store`)
   missing.forEach((activity) => console.log(formatActivity(activity)))
 
-  if (deleted.length === 0 && missing.length === 0) {
-    return true
-  }
-
   if (!write) {
-    console.log("Run again with --write to update the store")
+    if (deleted.length > 0 || missing.length > 0) {
+      console.log("Run again with --write to update the store")
+    }
 
     return true
   }
@@ -154,7 +183,18 @@ const syncActivities = async (argv) => {
     await store.writeActivity(await buildActivity({activity, options}))
   }
 
-  console.log(`Store updated in ${storeDir}`)
+  // The store now holds the whole account as it stood when it was listed,
+  // every activity with the details the plugin options ask for, which is what
+  // the cursor means: the next build can skip all of it. Only so without a
+  // window, which the cursor knows nothing about, and with the plugin options
+  // read, the command line ones alone giving no such guarantee.
+  if (config && !after && !before) {
+    await store.writeState({...(await store.readState()), lastFetch: listDate})
+  }
+
+  console.log(
+    `Store updated in ${path.relative(process.cwd(), storeDir) || "."}`
+  )
 
   return true
 }

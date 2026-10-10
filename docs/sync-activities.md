@@ -30,7 +30,8 @@ Run again with --write to update the store
 
 Nothing is changed unless `--write` is passed. It then deletes the activities
 gone from Strava and adds the missing ones, built exactly as the plugin builds
-the activities it sources.
+the activities it sources (see [the plugin options](#the-plugin-options)
+below).
 
 When the deleted activities are more than a tenth of the store, `--write`
 stops before changing anything. A list that short usually means the token sees
@@ -39,10 +40,32 @@ one generated with private activities left unchecked on the Strava
 authorization page. Pass `--force` once you have checked that those
 activities really are gone.
 
-The command reads your `.env` files the same way your `gatsby-config.js` does,
-and never moves the cursor. While `gatsby develop` is running, the change
-shows up without a restart (see
+Once `--write` has run, the store holds your whole account as it stood when
+the command listed it, so the command moves the cursor to that moment and the
+next build skips all of it. It leaves the cursor alone when it compared only a
+part of the history, or ran with `--no-config`.
+
+The command reads your `.env` files the same way your `gatsby-config.js` does.
+While `gatsby develop` is running, the change shows up without a restart (see
 [watching for changes](./store.md#watching-for-changes-in-gatsby-develop)).
+
+## The plugin options
+
+The command reads the plugin options from the `gatsby-config.js` of the
+current directory (`.cjs` and `.mjs` work too), and uses them the way a build
+would:
+
+- a missing activity gets the details `withStreams`, `withPhotos` and the
+  other `activities` options ask for, a `withStreams` function included;
+- the comparison stays within the `after` and `before` options, so that the
+  activities a site leaves out on purpose are not listed as missing;
+- the store is the one `storeDir` names.
+
+The command line options come on top: a detail option adds to the plugin
+options, `--after`, `--before` and `--dir` override them. `--config <path>`
+reads another file, and `--no-config` reads none, relying on the command line
+options alone. That is the way to go with a `gatsby-config.ts`, which only
+Gatsby knows how to load.
 
 ## Options
 
@@ -50,8 +73,8 @@ shows up without a restart (see
 | ------------------- | ----------------------------------------------------------------------------- |
 | `--write`           | Delete the activities gone from Strava and add the missing ones               |
 | `--force`           | Delete them even when they are more than a tenth of the store                 |
-| `--after <date>`    | Only compare the activities started after a date or a timestamp               |
-| `--before <date>`   | Only compare the activities started before a date or a timestamp              |
+| `--after <date>`    | Only compare the activities started after a date, overriding `after`          |
+| `--before <date>`   | Only compare the activities started before a date, overriding `before`        |
 | `--streams [types]` | Add streams to the missing activities, all of them when left empty            |
 | `--comments`        | Add comments to the missing activities                                        |
 | `--kudos`           | Add kudos to the missing activities                                           |
@@ -59,35 +82,15 @@ shows up without a restart (see
 | `--photos[=size]`   | Add photos to the missing activities, 1800 pixels wide unless a size is given |
 | `--zones`           | Add zones to the missing activities, needs a Strava subscription              |
 | `--all`             | Every detail option above                                                     |
-| `--dir <path>`      | Store directory, defaults to `.strava`                                        |
+| `--dir <path>`      | Store directory, defaults to the plugin's `storeDir`, or `.strava`            |
+| `--config <path>`   | Site config to read the plugin options from                                   |
+| `--no-config`       | Rely on the command line options alone                                        |
 | `--help`            | Show the usage                                                                |
 
 The detail options mean the same as for
 [`gatsby-source-strava-activity`](./fetch-activity.md#options) and cost one
-request per missing activity. Pass the ones your `gatsby-config.js` sets, so
-that an added activity has the same details as the others:
-
-```json
-{
-    "scripts": {
-        "sync-activities": "gatsby-source-strava-activities --streams latlng"
-    }
-}
-```
-
-## Sites fetching only a part of the history
-
-A site setting the `after` or `before` [options](./options.md#activities) only
-holds that part of the history in its store, and every activity outside of it
-would be listed as missing. Pass the same bounds to the command, which also
-spares the requests for the pages outside of them:
-
-```shell
-gatsby-source-strava-activities --after 1539500400
-```
-
-They take a timestamp, as the plugin options do, or a date such as
-`2018-10-14`.
+request per missing activity. `--after` and `--before` take a timestamp, as
+the plugin options do, or a date such as `2018-10-14`.
 
 ## What it does not catch
 

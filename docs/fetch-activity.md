@@ -34,12 +34,25 @@ type by type, so asking for `heartrate` after a `latlng` run keeps both.
 | `--zones`           | Add zones, needs a Strava subscription                              |
 | `--refresh`         | Re-fetch the activity itself, to pick up an edit made on strava.com |
 | `--all`             | Every option above, `--refresh` included                            |
-| `--dir <path>`      | Store directory, defaults to `.strava`                              |
+| `--dir <path>`      | Store directory, defaults to the plugin's `storeDir`, or `.strava`  |
+| `--config <path>`   | Site config to read the plugin options from                         |
+| `--no-config`       | Rely on the command line options alone                              |
 | `--help`            | Show the usage                                                      |
 
 Each option costs one request against your [rate limits](./rate-limits.md), on
 that single activity. `--refresh` is skipped by default, and implied the first
 time an activity is fetched — there being nothing yet to add options onto.
+
+## The plugin options
+
+The command reads the plugin options from the `gatsby-config.js` of the
+current directory, for `storeDir` and for the first fetch of an activity: an
+activity not yet in the store gets the details the `activities` options ask
+for, the way a build would have fetched it, plus the ones passed on the
+command line. Once it is in the store, the command only adds what you ask for.
+
+`--config <path>` reads another file, and `--no-config` reads none, which is
+the way to go with a `gatsby-config.ts`, which only Gatsby knows how to load.
 
 ## Picking up an edit made on strava.com
 

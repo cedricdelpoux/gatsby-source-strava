@@ -5,11 +5,13 @@ const path = require("path")
 const {buildActivity, getActivityDetails} = require("../utils/activity.js")
 const {createStore} = require("../utils/store.js")
 const {
+  CONFIG_OPTIONS,
   DETAILS_OPTIONS,
   connectStrava,
   isActivityId,
   parseArgs,
   run,
+  withPluginOptions,
 } = require("./cli.js")
 
 const usage = `Usage: gatsby-source-strava-activity <activityId> [options]
@@ -33,8 +35,15 @@ Options:
                       strava.com. Costs one request; skipped by default, and
                       implied the first time an activity is fetched
   --all              Every option above, --refresh included
-  --dir <path>       Store directory, defaults to .strava
+  --dir <path>       Store directory, defaults to the plugin's storeDir option,
+                      or .strava
+  --config <path>    Site config to read the plugin options from, defaults to
+                      the gatsby-config of the current directory
+  --no-config        Rely on the options above alone
   --help             Show this message
+
+The first time an activity is fetched, it gets the details the plugin options
+ask for, the way a build would have fetched it, plus the ones passed here.
 
 Options can be preset in a package.json script, the activity id being passed on
 the command line:
@@ -47,17 +56,11 @@ the command line:
 `
 
 const fetchActivity = async (argv) => {
-  const {
-    activityId,
-    all,
-    details: options,
-    help,
-    refresh,
-    storeDir,
-  } = parseArgs(argv, {
-    options: [...DETAILS_OPTIONS, "refresh", "dir"],
+  const args = parseArgs(argv, {
+    options: [...DETAILS_OPTIONS, ...CONFIG_OPTIONS, "refresh", "dir"],
     withActivityId: true,
   })
+  const {activityId, all, details: options, help, refresh} = args
 
   if (help || !activityId) {
     console.log(usage)
@@ -68,6 +71,8 @@ const fetchActivity = async (argv) => {
   if (!isActivityId(activityId)) {
     throw new Error(`\`${activityId}\` is not an activity id`)
   }
+
+  const {details: optionsWithConfig, storeDir} = withPluginOptions(args)
 
   await connectStrava()
 
@@ -88,12 +93,21 @@ const fetchActivity = async (argv) => {
   const activity = fetchDetails
     ? await getActivityDetails({activityId})
     : existing
-  const activityFull = await buildActivity({activity, existing, options})
+  // A first fetch starts from the plugin options, so that the activity has
+  // what a build would have given it. Later ones only add what is asked,
+  // `existing` keeping the rest.
+  const activityFull = await buildActivity({
+    activity,
+    existing,
+    options: existing ? options : optionsWithConfig,
+  })
 
   await store.writeActivity(activityFull)
 
   console.log(`${activityFull.name}`)
-  console.log(`Stored in ${path.join(storeDir, "activities")}`)
+  console.log(
+    `Stored in ${path.relative(process.cwd(), path.join(storeDir, "activities"))}`
+  )
 
   return true
 }
