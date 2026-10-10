@@ -21,6 +21,7 @@
   },
   "files": [
     "gatsby-node.js",
+    "scripts",
     "utils",
     "docs"
   ],
@@ -50,13 +51,13 @@
     "gatsby": ">=3.0.0"
   },
   "scripts": {
-    "lint": "eslint *.js gatsby-node.js utils example/src",
+    "lint": "eslint *.js gatsby-node.js scripts utils example/src",
     "prepublishOnly": "yarn lint",
     "prepare": "husky"
   },
   "bin": {
-    "gatsby-source-strava-activity": "utils/fetch-activity.js",
-    "gatsby-source-strava-token": "utils/generate-token.js"
+    "gatsby-source-strava-activity": "scripts/activity.js",
+    "gatsby-source-strava-token": "scripts/token.js"
   },
   "lint-staged": {
     "*.js": [
