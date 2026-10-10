@@ -1,3 +1,11 @@
+# 4.2.0
+
+## Features
+
+- feat: add a command syncing the store with the Strava account
+- feat: read the plugin options from gatsby-config in the commands
+- feat: complete the stored activities with what the plugin options ask for
+
 # 4.1.0
 
 ## Features
