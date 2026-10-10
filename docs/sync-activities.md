@@ -11,10 +11,12 @@ change never reach your site on their own:
 - an activity deleted on strava.com stays in the store, a duplicate upload of
   a ride for instance;
 - an activity uploaded again gets a new id but keeps its original start date,
-  older than the cursor, so it never enters the store.
+  older than the cursor, so it never enters the store;
+- an activity already in the store never gets what the plugin options start
+  asking for afterwards, a stream added to `streamsTypes` for instance.
 
 This command lists every activity your Strava account holds today, compares
-them with the store, and prints both lists. It costs one request every 200
+them with the store and with the plugin options, and prints the three lists. It costs one request every 200
 activities, so about 20 for a history of 4000.
 
 ```shell
@@ -25,11 +27,14 @@ $ gatsby-source-strava-activities
   19891004606  2026-08-25  Lunch Swim
 1 missing from the store
   20020096602  2026-08-25  Nage Statique
+2 lacking what the plugin options ask for, 2 requests
+  9374311551  2023-06-24  Bikepacking day 1  (streams latlng)
+  9381126482  2023-06-25  Bikepacking day 2  (streams latlng)
 Run again with --write to update the store
 ```
 
 Nothing is changed unless `--write` is passed. It then deletes the activities
-gone from Strava and adds the missing ones, built exactly as the plugin builds
+gone from Strava, completes the stored ones, and adds the missing ones, built exactly as the plugin builds
 the activities it sources (see [the plugin options](#the-plugin-options)
 below).
 
@@ -71,7 +76,7 @@ Gatsby knows how to load.
 
 | Option              | Effect                                                                        |
 | ------------------- | ----------------------------------------------------------------------------- |
-| `--write`           | Delete the activities gone from Strava and add the missing ones               |
+| `--write`           | Delete the activities gone from Strava, complete and add the others           |
 | `--force`           | Delete them even when they are more than a tenth of the store                 |
 | `--after <date>`    | Only compare the activities started after a date, overriding `after`          |
 | `--before <date>`   | Only compare the activities started before a date, overriding `before`        |
@@ -91,6 +96,52 @@ The detail options mean the same as for
 [`gatsby-source-strava-activity`](./fetch-activity.md#options) and cost one
 request per missing activity. `--after` and `--before` take a timestamp, as
 the plugin options do, or a date such as `2018-10-14`.
+
+## Completing the stored activities
+
+A stored activity is checked against the `activities` options, a
+`withStreams` function included, and only what it lacks is fetched and merged
+into it, the way
+[`gatsby-source-strava-activity`](./fetch-activity.md#adding-to-an-activity-you-already-fetched)
+adds to an activity. That costs one request per detail lacking, and nothing
+more once the store is complete. The detail options of the command line are
+left out of it: they are for the missing activities, and would otherwise cost
+a request on every activity of your history.
+
+A stream type Strava has no data for, a track on an indoor ride for instance,
+is stored as `null`, so that it is not asked for again on every run.
+
+Each activity is written as soon as it is complete, so that a run stopped by
+the [rate limits](./rate-limits.md) picks up where it left off when run again.
+
+This is how a site keeps some activities more precise than others, from a
+store started from scratch as much as from an existing one. The
+`summary_polyline` Strava lists an activity with is simplified, enough on a
+long ride to miss a map tile here and there, while the `latlng` stream holds
+every recorded point:
+
+```js
+const preciseActivities = new Set(require("./precise-activities.json"))
+
+module.exports = {
+    plugins: [
+        {
+            resolve: "gatsby-source-strava",
+            options: {
+                activities: {
+                    withStreams: (activity) =>
+                        preciseActivities.has(String(activity.id)),
+                    streamsTypes: ["latlng"],
+                },
+            },
+        },
+    ],
+}
+```
+
+A build fetches the stream of the listed activities it sources, and
+`gatsby-source-strava-activities --write` the stream of the ones already in
+the store, an id added to the list later included.
 
 ## What it does not catch
 

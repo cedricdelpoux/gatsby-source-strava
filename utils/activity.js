@@ -90,7 +90,15 @@ const getActivityStreams = ({activityId: id, streamsTypes: keys}) =>
     },
     method: {category: "streams", name: "activity"},
     format: (payload) => {
+      // A type the activity has no data for, a track on an indoor ride or a
+      // heart rate without a monitor, is not in the answer. It is kept as
+      // null, so that `gatsby-source-strava-activities` knows it was asked
+      // for and does not ask again on every run.
       const streams = {}
+
+      keys.forEach((key) => {
+        streams[key] = null
+      })
 
       if (payload && payload.length > 0) {
         payload.forEach(({type, data}) => {
