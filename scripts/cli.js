@@ -21,11 +21,27 @@ const WITH_OPTIONS = ["comments", "kudos", "laps", "photos", "zones"]
 // command taking them, `buildActivity` doing the work behind all of them
 const DETAILS_OPTIONS = ["streams", ...WITH_OPTIONS, "all"]
 
-const FLAGS = ["all", "help", "refresh", ...WITH_OPTIONS]
+const FLAGS = ["all", "force", "help", "refresh", "write", ...WITH_OPTIONS]
 
 const isActivityId = (value) => /^\d+$/.test(value)
 
 const withOption = (name) => `with${name[0].toUpperCase()}${name.slice(1)}`
+
+// Either a timestamp, the way the plugin's `after` and `before` options take
+// it, or a date, which is what one has in mind on a command line
+const parseDate = (name, value) => {
+  const timestamp = !value
+    ? NaN
+    : /^\d+$/.test(value)
+      ? Number(value.length === 13 ? Math.round(value / 1000) : value)
+      : Math.round(Date.parse(value) / 1000)
+
+  if (Number.isNaN(timestamp)) {
+    throw new Error(`\`--${name}\` needs a date or a timestamp`)
+  }
+
+  return timestamp
+}
 
 // Shared by every command, so that an option is written and understood the
 // same way wherever it is accepted. A command lists the options it takes,
@@ -35,11 +51,15 @@ const withOption = (name) => `with${name[0].toUpperCase()}${name.slice(1)}`
 const parseArgs = (argv, {options: accepted, withActivityId = false}) => {
   const args = {
     activityId: undefined,
+    after: null,
     all: false,
+    before: null,
     details: {},
+    force: false,
     help: false,
     refresh: false,
     storeDir: ".strava",
+    write: false,
   }
 
   for (let i = 0; i < argv.length; i++) {
@@ -80,6 +100,8 @@ const parseArgs = (argv, {options: accepted, withActivityId = false}) => {
       throw new Error(`\`--${name}\` takes no value`)
     } else if (name === "dir") {
       args.storeDir = readValue() || args.storeDir
+    } else if (name === "after" || name === "before") {
+      args[name] = parseDate(name, readValue())
     } else if (name === "streams") {
       const types = readValue()
 

@@ -73,6 +73,10 @@ const createStore = ({dir}) => {
       await writeJson(activityFile(activity.id), activity)
     },
 
+    async deleteActivity(id) {
+      await fs.promises.rm(activityFile(id), {force: true})
+    },
+
     async readState() {
       return (await readJson(stateFile)) || {}
     },

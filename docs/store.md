@@ -72,6 +72,10 @@ cursor, so it is never asked for again. Use the
 [`gatsby-source-strava-activity`](./fetch-activity.md) command, which fetches one
 activity and replaces its file, or delete the whole directory to start over.
 
+The [`gatsby-source-strava-activities`](./sync-activities.md) command takes care of the
+deleted activities, and of the ones uploaded again, which get a new id but keep
+a start date older than the cursor.
+
 ## Watching for changes in `gatsby develop`
 
 While `gatsby develop` is running, the plugin watches `activities/` for

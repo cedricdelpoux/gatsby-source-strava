@@ -88,10 +88,11 @@ continuous integration checkout.
 
 ## Commands
 
-| Command                              | What it does                                             |
-| ------------------------------------ | -------------------------------------------------------- |
-| `gatsby-source-strava-token`         | Generates the token the plugin needs                     |
-| `gatsby-source-strava-activity <id>` | Fetches one activity again, with as much detail as asked |
+| Command                              | What it does                                                   |
+| ------------------------------------ | -------------------------------------------------------------- |
+| `gatsby-source-strava-token`         | Generates the token the plugin needs                           |
+| `gatsby-source-strava-activity <id>` | Fetches one activity again, with as much detail as asked       |
+| `gatsby-source-strava-activities`    | Deletes the activities gone from Strava, adds the missing ones |
 
 ## Documentation
 
@@ -100,6 +101,7 @@ continuous integration checkout.
 - [Rate limits](./docs/rate-limits.md), what Strava allows and how to handle it
 - [Token](./docs/token.md), generating and refreshing it
 - [Fetching an activity again](./docs/fetch-activity.md), to add details or pick up an edit
+- [Syncing the activities](./docs/sync-activities.md), to drop deleted activities and add uploaded again ones
 - [Creating pages](./docs/create-pages.md), one page per activity
 
 ## Contributing
