@@ -12,6 +12,9 @@ module.exports = {
         stravaClientSecret: process.env.STRAVA_CLIENT_SECRET,
         stravaToken: process.env.STRAVA_TOKEN,
         debug: true,
+        athlete: {
+          withRoutes: true,
+        },
         activities: {
           after:
             new Date(
