@@ -1,3 +1,23 @@
+# 4.3.0
+
+## Features
+
+- feat: add a `StravaRoute` node per route with `withRoutes`, with `coordinates`
+- feat: fetch every route, Strava stopped at the first 30
+- feat: keep the routes in the store, as a fallback when the fetch fails
+- feat: export `getRoutes`, to compare the routes outside Gatsby
+- feat: ask for the `read_all` scope in `gatsby-source-strava-token`, generate
+  your token again to get your private routes
+
+## Changes
+
+- Changed: `StravaAthlete.routes` resolves to the `StravaRoute` nodes, and the
+  `athlete` of a route to the `StravaAthlete` node
+
+## Documentation
+
+- docs: document the routes and what the token can read
+
 # 4.2.0
 
 ## Features
