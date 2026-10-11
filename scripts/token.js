@@ -12,7 +12,8 @@ const usage = `Usage: gatsby-source-strava-token [options]
 
 Asks for the Client ID and Client Secret of your Strava application, opens
 Strava to authorize it, and writes the token the plugin needs to your .env
-files.
+files. The token can read your private activities, your full profile, and
+your private routes.
 
 Options:
   --help  Show this message
@@ -94,8 +95,10 @@ const generateToken = async (argv) => {
     redirect_uri: `http://localhost:${callbackServer.port}/callback`,
   })
 
+  // `read_all` is what lets the athlete's private routes through, which
+  // `athlete.withRoutes` and the routes endpoint otherwise filter out
   const authUrl = await strava.oauth.getRequestAccessURL({
-    scope: "activity:read_all,profile:read_all",
+    scope: "read_all,activity:read_all,profile:read_all",
   })
 
   await open(authUrl)
