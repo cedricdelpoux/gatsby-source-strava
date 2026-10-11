@@ -140,7 +140,8 @@ module.exports = {
                     //
                     // Add athlete koms
                     withKoms: true,
-                    // Add athlete routes
+                    // Add a StravaRoute node per route, private ones
+                    // included with a `read_all` token
                     withRoutes: true,
                     // Add athlete stats
                     withStats: true,
@@ -170,6 +171,9 @@ module.exports = {
     ],
 }
 ```
+
+`withRoutes` fetches every route of the account on every build, one request
+every 200 routes. Read the [Routes](./routes.md) documentation.
 
 ## Debug
 

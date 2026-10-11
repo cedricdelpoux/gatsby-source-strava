@@ -178,4 +178,4 @@ const normalizeAthlete = (athlete) => {
   return normalized
 }
 
-module.exports = {normalizeActivity, normalizeAthlete}
+module.exports = {normalizeActivity, normalizeAthlete, normalizeIds}

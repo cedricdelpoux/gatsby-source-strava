@@ -10,6 +10,7 @@ const createStore = ({dir}) => {
   const activitiesDir = path.join(dir, "activities")
   const stateFile = path.join(dir, "state.json")
   const athleteFile = path.join(dir, "athlete.json")
+  const routesFile = path.join(dir, "routes.json")
   const activityFile = (id) => path.join(activitiesDir, `${id}.json`)
 
   const readJson = async (file) => {
@@ -91,6 +92,14 @@ const createStore = ({dir}) => {
 
     async writeAthlete(athlete) {
       await writeJson(athleteFile, athlete)
+    },
+
+    async readRoutes() {
+      return readJson(routesFile)
+    },
+
+    async writeRoutes(routes) {
+      await writeJson(routesFile, routes)
     },
   }
 }

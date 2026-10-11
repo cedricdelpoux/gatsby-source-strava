@@ -218,7 +218,7 @@ class Strava {
         // network failure that outlasted the retries above. Throwing is what
         // stops the build, letting it through would hang it forever. `error`
         // alone never says which of the many calls a build makes failed —
-        // `getAthlete` for instance is up to five of them depending on
+        // `getAthlete` for instance is up to four of them depending on
         // options — so it is wrapped with that context here too.
         if (error.name !== "StatusCodeError") {
           throw new StravaError(

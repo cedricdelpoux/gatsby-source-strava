@@ -57,6 +57,7 @@ const types = `
     postable_clubs_count: Int
     resource_state: Int
     koms: [StravaAthleteKom]
+    routes: [StravaRoute] @link
   }
 
   type StravaAthleteKom {
@@ -124,6 +125,27 @@ const types = `
     has_kudoed: Boolean
     suffer_score: Int
     resource_state: Int
+  }
+
+  # Declared even without withRoutes, for the plugins extending it with
+  # createResolvers, such as gatsby-strava-tiles
+  type StravaRoute implements Node {
+    id: ID!
+    athlete: StravaAthlete @link(by: "id", from: "athlete.id")
+    name: String
+    description: String
+    distance: Float
+    elevation_gain: Float
+    estimated_moving_time: Int
+    type: Int
+    sub_type: Int
+    private: Boolean
+    starred: Boolean
+    timestamp: Int
+    created_at: Date @dateformat
+    updated_at: Date @dateformat
+    map: StravaActivityMap
+    coordinates: [[Float!]!]
   }
 
   type StravaActivityMap {

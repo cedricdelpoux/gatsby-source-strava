@@ -9,12 +9,17 @@ next builds.
 ├── activities/
 │   ├── 4291234567.json
 │   └── 4291234568.json
+├── athlete.json
+├── routes.json
 └── state.json
 ```
 
 One file per activity, named after its id, plus a `state.json` holding the
-timestamp of the last complete fetch. The athlete is never stored, it is
-fetched on every build.
+timestamp of the last complete fetch. The athlete and the routes are fetched
+on every build, and `athlete.json` and `routes.json` keep the last ones fetched
+for a build that cannot reach Strava, because of a network error or a
+[rate limit](./rate-limits.md). `routes.json` only exists with the
+[`withRoutes`](./routes.md) option.
 
 The directory sits next to your `gatsby-config.js` and is yours: nothing but
 you empties it. Add it to your `.gitignore`, or commit it to give your

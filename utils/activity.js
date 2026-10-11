@@ -114,10 +114,9 @@ const getActivityStreams = ({activityId: id, streamsTypes: keys}) =>
 // and beats `polyline`, the track Strava simplifies for map display, which in
 // turn beats `summary_polyline`, the simplified track of a listed activity,
 // the only one the plugin gets on its own.
-const getCoordinates = ({activity, streams}) => {
+const getCoordinates = ({map, streams}) => {
   const latlngStream = streams && streams.latlng
-  const activityMap = activity.map || {}
-  const encoded = activityMap.polyline || activityMap.summary_polyline
+  const encoded = map && (map.polyline || map.summary_polyline)
   const points = latlngStream || (encoded ? polyline.decode(encoded) : [])
 
   return points.map(([lat, lng]) => [lng, lat]) // x,y
@@ -180,7 +179,7 @@ const buildActivity = async ({
       ? {...(existing && existing.streams), ...freshStreams}
       : null
 
-  const coordinates = getCoordinates({activity, streams})
+  const coordinates = getCoordinates({map: activity.map, streams})
 
   // Strava puts a `{primary, count}` summary of its own on the activity,
   // under the same `photos` name the fetched list takes. Writing the list
@@ -203,4 +202,4 @@ const buildActivity = async ({
   }
 }
 
-module.exports = {buildActivity, getActivityDetails}
+module.exports = {buildActivity, getActivityDetails, getCoordinates}

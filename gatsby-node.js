@@ -4,6 +4,7 @@ const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
 const {normalizeActivity, normalizeAthlete} = require("./utils/normalize.js")
 const {fetchWithRateLimit} = require("./utils/rate-limit.js")
+const {fetchRoutes, normalizeRoute} = require("./utils/routes.js")
 const {createStore} = require("./utils/store.js")
 const {strava} = require("./utils/strava.js")
 const {types} = require("./utils/types.js")
@@ -95,6 +96,53 @@ exports.sourceNodes = async (
       watchStore({storeDir, actions, createActivityNode, getNode, reporter})
     }
 
+    const withRoutes = Boolean(
+      pluginOptions.athlete && pluginOptions.athlete.withRoutes
+    )
+    let routes = null
+
+    if (withRoutes) {
+      try {
+        routes = await fetchWithRateLimit({
+          fetch: fetchRoutes,
+          options: rateLimit,
+          reporter,
+        })
+      } catch (e) {
+        if (e.code !== "network") throw e
+
+        reporter.warn(`source-strava: ${e.message}`)
+      }
+
+      if (routes) {
+        await stravaStore.writeRoutes(routes)
+
+        reporter.success(`source-strava: ${routes.length} routes fetched`)
+      } else {
+        routes = await stravaStore.readRoutes()
+
+        reporter.warn(
+          routes
+            ? "source-strava: Routes not fetched, using cached version"
+            : "source-strava: Routes not fetched"
+        )
+      }
+    }
+
+    const normalizedRoutes = routes ? routes.map(normalizeRoute) : null
+
+    if (normalizedRoutes) {
+      for (const route of normalizedRoutes) {
+        await actions.createNode({
+          ...route,
+          internal: {
+            type: "StravaRoute",
+            contentDigest: createContentDigest(route),
+          },
+        })
+      }
+    }
+
     let athlete = await fetchWithRateLimit({
       fetch: () => getAthlete({options: pluginOptions.athlete}),
       options: rateLimit,
@@ -118,6 +166,13 @@ exports.sourceNodes = async (
 
     const normalizedAthlete = normalizeAthlete(athlete)
 
+    // An athlete stored by an earlier version still holds the raw routes
+    delete normalizedAthlete.routes
+
+    if (normalizedRoutes) {
+      normalizedAthlete.routes = normalizedRoutes
+    }
+
     if (pluginOptions.athlete && pluginOptions.athlete.extend) {
       // The activities are normalized here rather than upfront, so that a
       // site not using this option pays nothing for it
@@ -125,6 +180,11 @@ exports.sourceNodes = async (
         activities: activities ? activities.map(normalizeActivity) : activities,
         athlete: normalizedAthlete,
       })
+    }
+
+    // `extend` gets the routes whole, the node only links to them
+    if (normalizedAthlete.routes) {
+      normalizedAthlete.routes = normalizedAthlete.routes.map(({id}) => id)
     }
 
     await actions.createNode({

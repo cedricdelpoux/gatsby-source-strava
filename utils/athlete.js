@@ -1,12 +1,7 @@
 const {strava} = require("./strava.js")
 
 const getAthlete = async ({
-  options: {
-    withKoms = false,
-    withRoutes = false,
-    withStats = false,
-    withZones = false,
-  } = {},
+  options: {withKoms = false, withStats = false, withZones = false} = {},
 }) => {
   const athlete = await strava.fetch({
     args: {},
@@ -19,8 +14,6 @@ const getAthlete = async ({
       })
     : null
 
-  const routes = withRoutes ? await getAthleteRoutes() : null
-
   const stats = withStats
     ? await getAthleteStats({
         athleteId: athlete.id,
@@ -32,7 +25,6 @@ const getAthlete = async ({
   const athleteWithOptions = {
     ...athlete,
     ...(koms ? {koms} : {}),
-    ...(routes ? {routes} : {}),
     ...(stats ? {stats} : {}),
     ...(zones ? {zones} : {}),
   }
@@ -44,12 +36,6 @@ const getAthleteZones = () =>
   strava.fetch({
     args: {},
     method: {category: "athlete", name: "listZones"},
-  })
-
-const getAthleteRoutes = () =>
-  strava.fetch({
-    args: {},
-    method: {category: "athlete", name: "listRoutes"},
   })
 
 const getAthleteStats = ({athleteId: id}) =>

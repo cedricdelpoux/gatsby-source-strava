@@ -71,9 +71,10 @@ That's it!
 ## Data
 
 The plugin creates a `StravaAthlete` node and one `StravaActivity` node per
-activity, with a `coordinates` field ready for a map. Their GraphQL types are
-declared by the plugin, so your queries work even before the first activity is
-fetched.
+activity, with a `coordinates` field ready for a map. With the `withRoutes`
+option, it also creates one `StravaRoute` node per route, with the same
+`coordinates` field. Their GraphQL types are declared by the plugin, so your
+queries work even before the first activity is fetched.
 
 ## Store
 
@@ -98,6 +99,7 @@ continuous integration checkout.
 
 - [Options](./docs/options.md), everything you can configure
 - [Store](./docs/store.md), where your activities live and when they are fetched
+- [Routes](./docs/routes.md), your Strava routes, private ones included
 - [Rate limits](./docs/rate-limits.md), what Strava allows and how to handle it
 - [Token](./docs/token.md), generating and refreshing it
 - [Fetching an activity again](./docs/fetch-activity.md), to add details or pick up an edit
