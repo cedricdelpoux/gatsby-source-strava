@@ -98,3 +98,39 @@ was added, edited or deleted.
 
 `fetchRoutes` returns them as Strava sends them, and `normalizeRoute` turns one
 of those into a node.
+
+`getRoutesVersion` compares the `id` and `updated_at` for you. It turns a list
+of routes into a short hash, the same for the `StravaRoute` nodes and for
+`getRoutes` as long as no route was added, edited or deleted. Write it to a
+file at build time:
+
+```js
+// gatsby-node.js
+const fs = require("fs")
+const {getRoutesVersion} = require("gatsby-source-strava/utils/routes.js")
+
+exports.onPostBuild = ({getNodesByType}) => {
+    fs.writeFileSync(
+        "public/routes-version.json",
+        JSON.stringify(getRoutesVersion(getNodesByType("StravaRoute")))
+    )
+}
+```
+
+Then compare it with the routes on Strava, and trigger a build when they
+differ:
+
+```js
+const {
+    getRoutes,
+    getRoutesVersion,
+} = require("gatsby-source-strava/utils/routes.js")
+
+const deployedVersion = await fetch(
+    `${process.env.URL}/routes-version.json`
+).then((response) => response.json())
+
+if (getRoutesVersion(await getRoutes()) !== deployedVersion) {
+    await fetch(process.env.BUILD_HOOK_URL, {method: "POST"})
+}
+```

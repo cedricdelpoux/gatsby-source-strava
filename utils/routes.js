@@ -1,3 +1,5 @@
+const crypto = require("crypto")
+
 const {getCoordinates} = require("./activity.js")
 const {normalizeIds} = require("./normalize.js")
 const {strava} = require("./strava.js")
@@ -38,4 +40,18 @@ const normalizeRoute = (route) => {
 // Outside Gatsby, `strava.init` must run first
 const getRoutes = async () => (await fetchRoutes()).map(normalizeRoute)
 
-module.exports = {fetchRoutes, getRoutes, normalizeRoute}
+// The same for the `StravaRoute` nodes and for `getRoutes`, whatever their
+// order, and changed by any route added, edited or deleted
+const getRoutesVersion = (routes) =>
+  crypto
+    .createHash("sha1")
+    .update(
+      routes
+        .map(({id, updated_at}) => `${id}:${updated_at}`)
+        .sort()
+        .join("\n")
+    )
+    .digest("hex")
+    .slice(0, 10)
+
+module.exports = {fetchRoutes, getRoutes, getRoutesVersion, normalizeRoute}
