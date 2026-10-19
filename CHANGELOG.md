@@ -1,3 +1,15 @@
+# 4.4.0
+
+## Features
+
+- feat: export `getRoutesVersion` from `utils/routes.js`, a short hash of the
+  routes to tell whether one was added, edited or deleted since the last build
+
+## Documentation
+
+- docs: explain how to rebuild the site when a route changes
+- docs: explain how to keep the page queries fast with thousands of activities
+
 # 4.3.0
 
 ## Features
