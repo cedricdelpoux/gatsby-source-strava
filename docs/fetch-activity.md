@@ -97,9 +97,9 @@ An activity without GPS data, an indoor workout for instance, simply comes back
 without that stream, no error and no `coordinates`.
 
 `coordinates` is built from the stream when it is there, then from
-`map.polyline`, the complete track rounded to about a meter, then from
-`map.summary_polyline`, its simplified version. `--refresh` alone is enough to
-get `polyline`, without spending a request on a stream.
+`map.polyline`, the complete track, then from `map.summary_polyline`, its
+simplified version. It is rounded to 5 decimals, about a meter. `--refresh`
+alone is enough to get `polyline`, without spending a request on a stream.
 
 Pick several of them, or take everything:
 

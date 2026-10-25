@@ -110,6 +110,17 @@ const getActivityStreams = ({activityId: id, streamsTypes: keys}) =>
     },
   })
 
+// About a meter, finer than a GPS records. Strava sends a latlng stream as
+// `44.321220000000004` rather than `44.32122`, which weighs a third more in a
+// page query for no precision at all.
+const COORDINATE_DECIMALS = 5
+const COORDINATE_FACTOR = 10 ** COORDINATE_DECIMALS
+
+const roundPoint = (point) =>
+  point.map(
+    (value) => Math.round(value * COORDINATE_FACTOR) / COORDINATE_FACTOR
+  )
+
 // The latlng stream, fetched at full resolution, holds every recorded point
 // and beats `polyline`, the track Strava simplifies for map display, which in
 // turn beats `summary_polyline`, the simplified track of a listed activity,
@@ -119,7 +130,7 @@ const getCoordinates = ({map, streams}) => {
   const encoded = map && (map.polyline || map.summary_polyline)
   const points = latlngStream || (encoded ? polyline.decode(encoded) : [])
 
-  return points.map(([lat, lng]) => [lng, lat]) // x,y
+  return points.map(([lat, lng]) => roundPoint([lng, lat])) // x,y
 }
 
 // Adds to an activity everything the options ask for. Shared by the source
@@ -202,4 +213,9 @@ const buildActivity = async ({
   }
 }
 
-module.exports = {buildActivity, getActivityDetails, getCoordinates}
+module.exports = {
+  buildActivity,
+  getActivityDetails,
+  getCoordinates,
+  roundPoint,
+}

@@ -1,3 +1,5 @@
+const {roundPoint} = require("./activity.js")
+
 // Strava sends an id twice: once as a number, and again as an `id_str`
 // string, because a 64 bit id does not survive a double — a segment effort
 // id, at 19 digits, is already past what one holds exactly. That leaves every
@@ -138,10 +140,15 @@ const toNumber = (value) =>
     ? +value
     : value
 
-// Everything an activity needs on its way into a node: its ids, and the two
-// shapes above that a store filled over several versions can hold
+// Everything an activity needs on its way into a node: its ids, and the
+// shapes above that a store filled over several versions can hold. Rounding
+// `coordinates` here covers the activities stored before it was rounded.
 const normalizeActivity = (activity) => {
   const normalized = normalizeIds(activity)
+
+  if (Array.isArray(normalized.coordinates)) {
+    normalized.coordinates = normalized.coordinates.map(roundPoint)
+  }
 
   COORDINATE_FIELDS.forEach((field) => {
     if (Array.isArray(normalized[field])) {

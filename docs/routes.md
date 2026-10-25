@@ -42,9 +42,10 @@ query {
 ```
 
 `coordinates` holds the track in the same `[lng, lat]` format as the
-activities, ready for a GeoJSON `LineString`. By default, it is decoded from
-`map.summary_polyline`, the simplified track Strava sends with the list of
-routes. Add the [`withRouteStreams`](#full-track) option to get the full track.
+activities, ready for a GeoJSON `LineString`, rounded to 5 decimals, about a
+meter. By default, it is decoded from `map.summary_polyline`, the simplified
+track Strava sends with the list of routes. Add the
+[`withRouteStreams`](#full-track) option to get the full track.
 
 `id` is a `String`, like every id the plugin creates. A route id has 19 digits,
 more than a JavaScript number holds exactly.
