@@ -10,6 +10,8 @@ next builds.
 │   ├── 4291234567.json
 │   └── 4291234568.json
 ├── athlete.json
+├── route-streams/
+│   └── 3549024706549908168.json
 ├── routes.json
 └── state.json
 ```
@@ -20,6 +22,11 @@ on every build, and `athlete.json` and `routes.json` keep the last ones fetched
 for a build that cannot reach Strava, because of a network error or a
 [rate limit](./rate-limits.md). `routes.json` only exists with the
 [`withRoutes`](./routes.md) option.
+
+`route-streams/` holds the full track of each route with the
+[`withRouteStreams`](./routes.md#full-track) option, along with the
+`updated_at` of the route it was fetched for. A route edited on Strava gets
+its track fetched again, the others never do.
 
 The directory sits next to your `gatsby-config.js` and is yours: nothing but
 you empties it. Add it to your `.gitignore`, or commit it to give your

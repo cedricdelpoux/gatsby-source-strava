@@ -4,7 +4,11 @@ const getActivities = require("./utils/activities.js")
 const getAthlete = require("./utils/athlete.js")
 const {normalizeActivity, normalizeAthlete} = require("./utils/normalize.js")
 const {fetchWithRateLimit} = require("./utils/rate-limit.js")
-const {fetchRoutes, normalizeRoute} = require("./utils/routes.js")
+const {
+  addRouteStreams,
+  fetchRoutes,
+  normalizeRoute,
+} = require("./utils/routes.js")
 const {createStore} = require("./utils/store.js")
 const {strava} = require("./utils/strava.js")
 const {types} = require("./utils/types.js")
@@ -126,6 +130,26 @@ exports.sourceNodes = async (
             ? "source-strava: Routes not fetched, using cached version"
             : "source-strava: Routes not fetched"
         )
+      }
+
+      const {withRouteStreams} = pluginOptions.athlete
+
+      if (routes && withRouteStreams) {
+        const routesWithStreams = await addRouteStreams({
+          rateLimit,
+          reporter,
+          routes,
+          store: stravaStore,
+          withRouteStreams,
+        })
+
+        routes = routesWithStreams.routes
+
+        if (routesWithStreams.fetchedCount > 0) {
+          reporter.success(
+            `source-strava: ${routesWithStreams.fetchedCount} route streams fetched`
+          )
+        }
       }
     }
 

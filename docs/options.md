@@ -143,6 +143,11 @@ module.exports = {
                     // Add a StravaRoute node per route, private ones
                     // included with a `read_all` token
                     withRoutes: true,
+                    // Build the routes coordinates from their full track,
+                    // one request per new or edited route
+                    withRouteStreams: true,
+                    // or only for some routes
+                    withRouteStreams: (route) => route.type === 1,
                     // Add athlete stats
                     withStats: true,
                     // Add athlete zones
@@ -173,7 +178,8 @@ module.exports = {
 ```
 
 `withRoutes` fetches every route of the account on every build, one request
-every 200 routes. Read the [Routes](./routes.md) documentation.
+every 200 routes. `withRouteStreams` adds one request per new or edited route.
+Read the [Routes](./routes.md) documentation.
 
 ## Debug
 

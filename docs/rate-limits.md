@@ -20,6 +20,9 @@ Fetching activities costs 1 request per page of 200 activities. Then each
 `withZones`) lets you fetch around 16 activities before reaching the short rate
 limit.
 
+The routes cost 1 request per page of 200 routes on every build, plus 1
+request per new or edited route with `withRouteStreams`.
+
 ## Short Rate Limit
 
 By default, `gatsby-source-strava` warns and stops fetching when the short rate

@@ -73,7 +73,8 @@ That's it!
 The plugin creates a `StravaAthlete` node and one `StravaActivity` node per
 activity, with a `coordinates` field ready for a map. With the `withRoutes`
 option, it also creates one `StravaRoute` node per route, with the same
-`coordinates` field. Their GraphQL types are declared by the plugin, so your
+`coordinates` field, built from their full track with the `withRouteStreams`
+option. Their GraphQL types are declared by the plugin, so your
 queries work even before the first activity is fetched.
 
 ## Store

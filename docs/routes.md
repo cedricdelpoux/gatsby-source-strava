@@ -42,11 +42,9 @@ query {
 ```
 
 `coordinates` holds the track in the same `[lng, lat]` format as the
-activities, ready for a GeoJSON `LineString`. It is decoded from
-`map.summary_polyline`. A route follows the road network with a point at every
-turn, so its summary track is barely shorter than the detailed one: 284 points
-against 288 on a 10.5 km route. Fetching the detail would cost one request per
-route for nothing visible on a map.
+activities, ready for a GeoJSON `LineString`. By default, it is decoded from
+`map.summary_polyline`, the simplified track Strava sends with the list of
+routes. Add the [`withRouteStreams`](#full-track) option to get the full track.
 
 `id` is a `String`, like every id the plugin creates. A route id has 19 digits,
 more than a JavaScript number holds exactly.
@@ -64,6 +62,47 @@ queries and the plugins adding fields to it with `createResolvers`, such as
 
 The athlete links to the same nodes, so `stravaAthlete { routes { name } }`
 works too.
+
+## Full track
+
+`map.summary_polyline` keeps a point every 300 m or so, and cuts the turns: on
+a 41 km route, it has 129 points, and 20% of the real track is more than 10 m
+away from it, up to 25 m. That is fine for a map, not for comparing a route
+with other data, such as the OpenStreetMap paths it goes through.
+
+The `withRouteStreams` athlete option fetches the `latlng` stream of each
+route, and `coordinates` is built from it. The same 41 km route then has 882
+points, one every 47 m on average, at every turn and at least one every 100 m
+on a straight line:
+
+```js
+module.exports = {
+    plugins: [
+        {
+            resolve: "gatsby-source-strava",
+            options: {
+                athlete: {
+                    withRoutes: true,
+                    withRouteStreams: true,
+                    // Or only for some routes
+                    withRouteStreams: (route) => route.type === 1,
+                },
+            },
+        },
+    ],
+}
+```
+
+A function receives each route as Strava lists it, before it becomes a node.
+
+It costs one request per route, only for the new and edited ones: each stream
+is kept in the [store](./store.md), and fetched again only when the
+`updated_at` of its route changes. When a stream cannot be fetched, because of
+a network error or a [rate limit](./rate-limits.md), the build goes on with
+`map.summary_polyline` for that route and logs a warning. The stream is
+fetched on the next build. `stopOnRateLimit` still stops the build.
+
+The stream itself is not added to the node, only `coordinates`.
 
 ## When Strava cannot be reached
 
@@ -96,8 +135,24 @@ const routes = await getRoutes()
 Comparing the `id` and `updated_at` of each route is enough to tell whether one
 was added, edited or deleted.
 
-`fetchRoutes` returns them as Strava sends them, and `normalizeRoute` turns one
-of those into a node.
+`coordinates` comes from `map.summary_polyline`, unless you pass the same
+`withRouteStreams` option. Pass a store as well, so that only the streams of
+the new and edited routes are fetched:
+
+```js
+const {createStore} = require("gatsby-source-strava/utils/store.js")
+
+const routes = await getRoutes({
+    store: createStore({dir: ".strava"}),
+    withRouteStreams: true,
+})
+```
+
+It also takes `rateLimit`, the `waitOnRateLimit` and `stopOnRateLimit`
+options, and `reporter`, which defaults to `console`.
+
+`fetchRoutes` returns them as Strava sends them, `addRouteStreams` adds their
+stream, and `normalizeRoute` turns one of those into a node.
 
 `getRoutesVersion` compares the `id` and `updated_at` for you. It turns a list
 of routes into a short hash, the same for the `StravaRoute` nodes and for
