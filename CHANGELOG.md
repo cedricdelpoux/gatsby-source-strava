@@ -1,3 +1,23 @@
+# 4.5.0
+
+## Features
+
+- feat: add the `withRouteStreams` athlete option, building the `coordinates`
+  of a route from its full track rather than its summary
+- feat: keep the route streams in the store, fetched again only for the new
+  and edited routes
+- feat: take `withRouteStreams` and a store in `getRoutes`, and export
+  `addRouteStreams` from `utils/routes.js`
+
+## Changes
+
+- Changed: `coordinates` is rounded to 5 decimals, about a meter, on the
+  activities and the routes, a third lighter in a page query
+
+## Documentation
+
+- docs: document the full track of the routes
+
 # 4.4.0
 
 ## Features
